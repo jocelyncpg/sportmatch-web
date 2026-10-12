@@ -1,20 +1,49 @@
 "use client";
 
+import {
+  Bell,
+  Building2,
+  LayoutDashboard,
+  LogOut,
+  Megaphone,
+  ShieldCheck,
+  Users,
+  type LucideIcon,
+} from "lucide-react";
 import Link from "next/link";
 import { Suspense } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import AuthGuard from "@/components/AuthGuard";
 import BrandLogo from "@/components/BrandLogo";
 import { SesionCtx } from "@/components/SesionContext";
+import ThemeToggle from "@/components/ThemeToggle";
+import { Avatar } from "@/components/ui";
 import { logout, type Rol } from "@/lib/auth.mock";
 
-const MENU: { href: string; label: string; roles: Rol[] }[] = [
-  { href: "/inicio", label: "Inicio", roles: ["club", "admin"] },
-  { href: "/clubes", label: "Directorio de clubes", roles: ["club", "admin"] },
-  { href: "/perfil", label: "Mi club", roles: ["club"] },
-  { href: "/convocatorias", label: "Convocatorias", roles: ["club"] },
-  { href: "/postulantes", label: "Postulantes", roles: ["club"] },
-  { href: "/avisos", label: "Avisos", roles: ["club"] },
+interface Item {
+  href: string;
+  label: string;
+  icono: LucideIcon;
+  roles: Rol[];
+}
+
+const GRUPOS: { titulo: string; items: Item[] }[] = [
+  {
+    titulo: "General",
+    items: [
+      { href: "/inicio", label: "Inicio", icono: LayoutDashboard, roles: ["club", "admin"] },
+      { href: "/clubes", label: "Directorio de clubes", icono: Building2, roles: ["club", "admin"] },
+    ],
+  },
+  {
+    titulo: "Gestión del club",
+    items: [
+      { href: "/perfil", label: "Mi club", icono: ShieldCheck, roles: ["club"] },
+      { href: "/convocatorias", label: "Convocatorias", icono: Megaphone, roles: ["club"] },
+      { href: "/postulantes", label: "Postulantes", icono: Users, roles: ["club"] },
+      { href: "/avisos", label: "Avisos", icono: Bell, roles: ["club"] },
+    ],
+  },
 ];
 
 function Panel({ children }: { children: React.ReactNode }) {
@@ -24,48 +53,79 @@ function Panel({ children }: { children: React.ReactNode }) {
   return (
     <AuthGuard>
       {(sesion) => {
-        const items = MENU.filter((m) => m.roles.includes(sesion.rol));
+        const grupos = GRUPOS.map((g) => ({
+          ...g,
+          items: g.items.filter((i) => i.roles.includes(sesion.rol)),
+        })).filter((g) => g.items.length > 0);
+        const todos = grupos.flatMap((g) => g.items);
+
         return (
           <SesionCtx.Provider value={sesion}>
             <div className="flex min-h-screen">
-              <aside className="hidden w-64 shrink-0 flex-col border-r border-border bg-card p-5 md:flex">
-                <div className="mb-6">
-                  <BrandLogo width={170} />
+              <aside className="sticky top-0 hidden h-screen w-64 shrink-0 flex-col border-r border-border bg-card px-4 py-5 md:flex">
+                <div className="mb-7 px-2">
+                  <BrandLogo width={160} />
                 </div>
-                <nav className="flex-1 space-y-1">
-                  {items.map((m) => {
-                    const activo = pathname.startsWith(m.href);
-                    return (
-                      <Link
-                        key={m.href}
-                        href={m.href}
-                        className={`block rounded-[13px] px-3 py-2.5 text-sm font-semibold ${
-                          activo ? "bg-chip text-accent" : "text-muted hover:text-text"
-                        }`}
-                      >
-                        {m.label}
-                      </Link>
-                    );
-                  })}
+
+                <nav className="flex-1 space-y-6 overflow-y-auto">
+                  {grupos.map((g) => (
+                    <div key={g.titulo}>
+                      <p className="mb-2 px-3 text-[11px] font-bold uppercase tracking-wider text-muted">
+                        {g.titulo}
+                      </p>
+                      <div className="space-y-1">
+                        {g.items.map((m) => {
+                          const activo = pathname.startsWith(m.href);
+                          const Icono = m.icono;
+                          return (
+                            <Link
+                              key={m.href}
+                              href={m.href}
+                              className={`flex items-center gap-3 rounded-[13px] px-3 py-2.5 text-sm font-semibold transition-colors ${
+                                activo
+                                  ? "bg-chip text-accent"
+                                  : "text-muted hover:bg-subtle hover:text-text"
+                              }`}
+                            >
+                              <Icono size={18} strokeWidth={2.2} />
+                              {m.label}
+                            </Link>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ))}
                 </nav>
-                <div className="border-t border-border pt-4 text-xs">
-                  <p className="font-semibold">{sesion.nombre}</p>
-                  <p className="mb-3 text-muted">{sesion.email}</p>
+
+                <div className="mb-3 flex items-center justify-between px-1">
+                  <span className="text-xs font-semibold text-muted">Tema</span>
+                  <ThemeToggle compacto />
+                </div>
+                <div className="flex items-center gap-3 rounded-[14px] bg-subtle p-3">
+                  <Avatar nombre={sesion.nombre} size={38} />
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-bold">{sesion.nombre}</p>
+                    <p className="truncate text-xs text-muted">
+                      {sesion.rol === "club" ? "Cuenta de club" : "Administración"}
+                    </p>
+                  </div>
                   <button
+                    title="Cerrar sesión"
+                    aria-label="Cerrar sesión"
                     onClick={() => {
                       logout();
                       router.replace("/login");
                     }}
-                    className="font-semibold text-danger"
+                    className="rounded-lg p-2 text-muted hover:bg-card hover:text-danger"
                   >
-                    Cerrar sesión
+                    <LogOut size={18} />
                   </button>
                 </div>
               </aside>
 
               <div className="min-w-0 flex-1">
-                <nav className="flex gap-2 overflow-x-auto border-b border-border bg-card p-3 md:hidden">
-                  {items.map((m) => (
+                <nav className="flex items-center gap-2 overflow-x-auto border-b border-border bg-card p-3 md:hidden">
+                  {todos.map((m) => (
                     <Link
                       key={m.href}
                       href={m.href}
@@ -76,8 +136,11 @@ function Panel({ children }: { children: React.ReactNode }) {
                       {m.label}
                     </Link>
                   ))}
+                  <span className="ml-auto shrink-0">
+                    <ThemeToggle compacto />
+                  </span>
                 </nav>
-                <main className="p-6 md:p-10">{children}</main>
+                <main className="mx-auto w-full max-w-6xl px-6 py-8 md:px-10 md:py-10">{children}</main>
               </div>
             </div>
           </SesionCtx.Provider>

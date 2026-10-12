@@ -1,12 +1,16 @@
+"use client";
+
+import type { LucideIcon } from "lucide-react";
 import Image from "next/image";
+import { useState } from "react";
 import type { EstadoPostulante } from "@/lib/store.mock";
 
 export const inputClass =
-  "w-full rounded-[13px] border border-border bg-input px-3.5 py-3 text-sm outline-none focus:border-accent";
+  "w-full rounded-[13px] border border-border bg-input px-3.5 py-2.5 text-sm outline-none focus:border-accent";
 export const btnPrimary =
-  "rounded-[13px] bg-primary px-5 py-3 text-sm font-bold text-white disabled:opacity-60";
+  "rounded-[13px] bg-primary px-5 py-2.5 text-sm font-bold text-white disabled:opacity-60";
 export const btnGhost =
-  "rounded-[13px] border border-border bg-card px-4 py-2.5 text-sm font-semibold hover:border-accent";
+  "rounded-[13px] border border-border bg-card px-4 py-2 text-sm font-semibold hover:border-accent";
 
 export function PageHeader({
   titulo,
@@ -20,17 +24,28 @@ export function PageHeader({
   return (
     <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
       <div>
-        <h1 className="text-2xl font-extrabold">{titulo}</h1>
-        {subtitulo ? <p className="mt-1 text-sm text-muted">{subtitulo}</p> : null}
+        <h1 className="text-xl font-bold tracking-tight">{titulo}</h1>
+        {subtitulo ? <p className="mt-0.5 text-sm text-muted">{subtitulo}</p> : null}
       </div>
       {accion}
     </div>
   );
 }
 
-export function Card({ children, className = "" }: { children: React.ReactNode; className?: string }) {
+// flush = sin relleno interno (para tablas y listas que llegan hasta el borde)
+export function Card({
+  children,
+  className = "",
+  flush = false,
+}: {
+  children: React.ReactNode;
+  className?: string;
+  flush?: boolean;
+}) {
   return (
-    <div className={`rounded-[18px] border border-border bg-card p-5 ${className}`}>{children}</div>
+    <div className={`rounded-2xl border border-border bg-card ${flush ? "" : "p-5"} ${className}`}>
+      {children}
+    </div>
   );
 }
 
@@ -53,26 +68,56 @@ export function Chip({
   );
 }
 
-const COLOR_ESTADO: Record<EstadoPostulante, string> = {
-  Pendiente: "bg-subtle text-muted",
-  Preseleccionado: "bg-chip text-accent",
-  Aceptado: "bg-success-bg text-success",
-  Rechazado: "bg-danger-bg text-danger",
+// Colores de cada estado; los gráficos usan los mismos para que todo coincida.
+export const COLOR_ESTADO: Record<EstadoPostulante, string> = {
+  Pendiente: "var(--muted)",
+  Preseleccionado: "var(--accent)",
+  Aceptado: "var(--success)",
+  Rechazado: "var(--danger)",
 };
 
 export function BadgeEstado({ estado }: { estado: EstadoPostulante }) {
   return (
-    <span className={`rounded-full px-3 py-1 text-xs font-bold ${COLOR_ESTADO[estado]}`}>{estado}</span>
+    <span className="inline-flex items-center gap-1.5 text-xs font-semibold">
+      <span className="h-2 w-2 rounded-full" style={{ background: COLOR_ESTADO[estado] }} />
+      {estado}
+    </span>
   );
 }
 
-export function Avatar({ nombre, logoUrl, size = 44 }: { nombre: string; logoUrl?: string; size?: number }) {
+export function Avatar({
+  nombre,
+  logoUrl,
+  foto,
+  size = 44,
+}: {
+  nombre: string;
+  logoUrl?: string;
+  foto?: string;
+  size?: number;
+}) {
+  const [fallo, setFallo] = useState(false);
   const iniciales = nombre
     .split(" ")
     .slice(0, 2)
     .map((p) => p[0])
     .join("")
     .toUpperCase();
+
+  if (foto && !fallo) {
+    return (
+      <div className="relative shrink-0 overflow-hidden rounded-full bg-subtle" style={{ width: size, height: size }}>
+        <Image
+          src={foto}
+          alt={nombre}
+          fill
+          sizes={`${size}px`}
+          className="object-cover object-top"
+          onError={() => setFallo(true)}
+        />
+      </div>
+    );
+  }
   if (logoUrl) {
     return (
       <Image
@@ -88,8 +133,8 @@ export function Avatar({ nombre, logoUrl, size = 44 }: { nombre: string; logoUrl
   }
   return (
     <div
-      style={{ width: size, height: size }}
-      className="flex shrink-0 items-center justify-center rounded-full bg-primary text-sm font-bold text-white"
+      style={{ width: size, height: size, fontSize: Math.max(11, Math.round(size / 3)) }}
+      className="flex shrink-0 items-center justify-center rounded-full bg-chip font-bold text-accent"
     >
       {iniciales}
     </div>
@@ -111,3 +156,45 @@ export const fechaCorta = (aaaammdd: string) =>
     month: "short",
     year: "numeric",
   });
+
+// Fila de cifras clave: una sola tarjeta con divisores, sin íconos decorativos.
+export function StatStrip({ items }: { items: { valor: number | string; etiqueta: string; nota?: string }[] }) {
+  return (
+    <Card flush className="grid divide-y divide-border sm:grid-flow-col sm:auto-cols-fr sm:divide-x sm:divide-y-0">
+      {items.map((i) => (
+        <div key={i.etiqueta} className="px-5 py-4">
+          <p className="text-xs font-semibold text-muted">{i.etiqueta}</p>
+          <p className="mt-1 text-2xl font-bold tracking-tight">{i.valor}</p>
+          {i.nota ? <p className="mt-0.5 text-xs text-muted">{i.nota}</p> : null}
+        </div>
+      ))}
+    </Card>
+  );
+}
+
+export function ProgressBar({ valor, max }: { valor: number; max: number }) {
+  const pct = max > 0 ? Math.min(100, Math.round((valor / max) * 100)) : 0;
+  return (
+    <div className="h-1.5 w-full overflow-hidden rounded-full bg-subtle">
+      <div className="h-full rounded-full bg-primary" style={{ width: `${pct}%` }} />
+    </div>
+  );
+}
+
+export function EstadoVacio({
+  icono: Icono,
+  titulo,
+  texto,
+}: {
+  icono: LucideIcon;
+  titulo: string;
+  texto: string;
+}) {
+  return (
+    <div className="flex flex-col items-center rounded-2xl border border-dashed border-border px-6 py-12 text-center">
+      <Icono size={22} className="mb-3 text-muted" />
+      <p className="font-semibold">{titulo}</p>
+      <p className="mt-1 max-w-sm text-sm text-muted">{texto}</p>
+    </div>
+  );
+}

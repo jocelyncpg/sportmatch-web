@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { useState } from "react";
 import BrandLogo from "@/components/BrandLogo";
+import ThemeToggle from "@/components/ThemeToggle";
 import { login } from "@/lib/auth.mock";
 
 export default function LoginPage() {
@@ -38,7 +39,7 @@ export default function LoginPage() {
           alt=""
           fill
           priority
-          sizes="42vw"
+          sizes="50vw"
           className="object-cover object-[50%_25%]"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
@@ -47,7 +48,10 @@ export default function LoginPage() {
         </p>
       </div>
 
-      <div className="flex flex-1 items-center justify-center px-4">
+      <div className="relative flex flex-1 items-center justify-center px-4">
+        <div className="absolute right-4 top-4">
+          <ThemeToggle />
+        </div>
         <form onSubmit={onSubmit} className="w-full max-w-sm space-y-4">
           <BrandLogo width={220} />
           <p className="text-sm text-muted">Panel para clubes y administración</p>
