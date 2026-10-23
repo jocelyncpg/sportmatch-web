@@ -3,6 +3,7 @@
 import type { LucideIcon } from "lucide-react";
 import Image from "next/image";
 import { useState } from "react";
+import type { EstadoReporte } from "@/lib/moderacion.mock";
 import type { EstadoPostulante } from "@/lib/store.mock";
 
 export const inputClass =
@@ -85,6 +86,23 @@ export function BadgeEstado({ estado }: { estado: EstadoPostulante }) {
   );
 }
 
+// Estado de un reporte de moderación: mismo estilo que BadgeEstado (punto de color + texto).
+const COLOR_REPORTE: Record<EstadoReporte, { color: string; texto: string }> = {
+  pendiente: { color: "var(--danger)", texto: "Pendiente" },
+  revisado: { color: "var(--success)", texto: "Revisado" },
+  escalado: { color: "var(--accent)", texto: "Escalado a sanción" },
+};
+
+export function BadgeReporte({ estado }: { estado: EstadoReporte }) {
+  const c = COLOR_REPORTE[estado];
+  return (
+    <span className="inline-flex items-center gap-1.5 text-xs font-semibold">
+      <span className="h-2 w-2 rounded-full" style={{ background: c.color }} />
+      {c.texto}
+    </span>
+  );
+}
+
 export function Avatar({
   nombre,
   logoUrl,
@@ -155,6 +173,16 @@ export const fechaCorta = (aaaammdd: string) =>
     day: "numeric",
     month: "short",
     year: "numeric",
+  });
+
+/** Fecha y hora de un instante ISO, para reportes y auditoría. */
+export const fechaHora = (iso: string) =>
+  new Date(iso).toLocaleString("es-CL", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
   });
 
 // Fila de cifras clave: una sola tarjeta con divisores, sin íconos decorativos.

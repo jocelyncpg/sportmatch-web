@@ -18,12 +18,14 @@ import {
 } from "@/components/ui";
 import { CENTRO_SANTIAGO, COMUNAS } from "@/lib/comunas";
 import { porComuna, porConvocatoria, porDia, porEstado, porNivel } from "@/lib/stats";
+import { estaActiva, useModeracion } from "@/lib/moderacion.mock";
 import { CLUB_DEMO_ID, useDatos } from "@/lib/store.mock";
 
 export default function InicioPage() {
   const sesion = useSesion();
   const datos = useDatos();
   const { mensaje, abierto, setAbierto, cambiar } = useGestionPostulantes();
+  const mod = useModeracion();
 
   if (sesion.rol === "admin") {
     return (
@@ -39,6 +41,24 @@ export default function InicioPage() {
             { valor: datos.postulantes.length, etiqueta: "Postulaciones" },
           ]}
         />
+
+        <div className="mb-3 mt-8 flex items-center justify-between">
+          <h2 className="text-sm font-bold">Moderación</h2>
+          <Link href="/reportes" className="text-xs font-semibold text-accent hover:underline">
+            Ir a reportes
+          </Link>
+        </div>
+        <StatStrip
+          items={[
+            {
+              valor: mod.reportes.filter((r) => r.estado === "pendiente").length,
+              etiqueta: "Reportes por atender",
+            },
+            { valor: mod.sanciones.filter((s) => estaActiva(s)).length, etiqueta: "Cuentas suspendidas" },
+            { valor: mod.auditoria.length, etiqueta: "Acciones registradas", nota: "Ver detalle en Auditoría" },
+          ]}
+        />
+
         <h2 className="mb-3 mt-8 text-sm font-bold">Clubes en el mapa</h2>
         <Mapa
           centro={CENTRO_SANTIAGO}

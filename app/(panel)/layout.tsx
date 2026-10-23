@@ -1,11 +1,15 @@
 "use client";
 
 import {
+  BadgePercent,
   Bell,
   Building2,
+  Flag,
+  Gavel,
   LayoutDashboard,
   LogOut,
   Megaphone,
+  ScrollText,
   ShieldCheck,
   Users,
   type LucideIcon,
@@ -42,6 +46,18 @@ const GRUPOS: { titulo: string; items: Item[] }[] = [
       { href: "/convocatorias", label: "Convocatorias", icono: Megaphone, roles: ["club"] },
       { href: "/postulantes", label: "Postulantes", icono: Users, roles: ["club"] },
       { href: "/avisos", label: "Avisos", icono: Bell, roles: ["club"] },
+    ],
+  },
+  {
+    titulo: "Plataforma",
+    items: [{ href: "/planes", label: "Planes y convenios", icono: BadgePercent, roles: ["admin"] }],
+  },
+  {
+    titulo: "Moderación",
+    items: [
+      { href: "/reportes", label: "Reportes", icono: Flag, roles: ["admin"] },
+      { href: "/sanciones", label: "Sanciones", icono: Gavel, roles: ["admin"] },
+      { href: "/auditoria", label: "Auditoría", icono: ScrollText, roles: ["admin"] },
     ],
   },
 ];

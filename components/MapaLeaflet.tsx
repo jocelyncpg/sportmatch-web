@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useRef, useState } from "react";
 import { CircleMarker, MapContainer, TileLayer, Tooltip } from "react-leaflet";
 import { useTheme } from "@/lib/theme";
 
@@ -30,32 +31,57 @@ export default function MapaLeaflet({
   const { tema } = useTheme();
   const color = tema === "dark" ? "#9061f9" : "#7c3aed";
 
+  // Leaflet no tolera montarse, destruirse y montarse otra vez sobre el mismo contenedor
+  // (Strict Mode, HMR, y las páginas que Next oculta con cacheComponents).
+  // Solución: el mapa existe solo mientras el componente está montado y cada montaje usa una key nueva.
+  const [instancia, setInstancia] = useState(0);
+  const contador = useRef(0);
+
+  useEffect(() => {
+    contador.current += 1;
+    setInstancia(contador.current);
+    return () => setInstancia(0);
+  }, []);
+
   return (
-    <div style={{ height: alto }} className={`overflow-hidden rounded-xl border border-border ${tema === "dark" ? "mapa-oscuro" : ""}`}>
-      <MapContainer center={centro} zoom={zoom} scrollWheelZoom={false} style={{ height: "100%", width: "100%" }}>
-        <TileLayer
-          url={TILES}
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-        />
-        {puntos.map((p) => (
-          <CircleMarker
-            key={p.id}
-            center={p.coord}
-            radius={Math.round(8 * (p.peso ?? 1))}
-            pathOptions={{
-              color: tema === "dark" ? "#0b0f19" : "#ffffff",
-              weight: 2,
-              fillColor: color,
-              fillOpacity: p.destacado === false ? 0.45 : 0.85,
-            }}
-          >
-            <Tooltip direction="top">
-              <strong>{p.nombre}</strong>
-              {p.detalle ? <div>{p.detalle}</div> : null}
-            </Tooltip>
-          </CircleMarker>
-        ))}
-      </MapContainer>
+    <div
+      style={{ height: alto }}
+      className={`overflow-hidden rounded-xl border border-border ${tema === "dark" ? "mapa-oscuro" : ""}`}
+    >
+      {instancia === 0 ? (
+        <div className="h-full w-full animate-pulse bg-subtle" />
+      ) : (
+        <MapContainer
+          key={instancia}
+          center={centro}
+          zoom={zoom}
+          scrollWheelZoom={false}
+          style={{ height: "100%", width: "100%" }}
+        >
+          <TileLayer
+            url={TILES}
+            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+          />
+          {puntos.map((p) => (
+            <CircleMarker
+              key={p.id}
+              center={p.coord}
+              radius={Math.round(8 * (p.peso ?? 1))}
+              pathOptions={{
+                color: tema === "dark" ? "#0b0f19" : "#ffffff",
+                weight: 2,
+                fillColor: color,
+                fillOpacity: p.destacado === false ? 0.45 : 0.85,
+              }}
+            >
+              <Tooltip direction="top">
+                <strong>{p.nombre}</strong>
+                {p.detalle ? <div>{p.detalle}</div> : null}
+              </Tooltip>
+            </CircleMarker>
+          ))}
+        </MapContainer>
+      )}
     </div>
   );
 }
