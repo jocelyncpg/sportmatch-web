@@ -1,6 +1,7 @@
 "use client";
 
 import "leaflet/dist/leaflet.css";
+import { useEffect, useState } from "react";
 import {
   CircleMarker,
   MapContainer,
@@ -8,6 +9,7 @@ import {
   TileLayer,
   Tooltip,
 } from "react-leaflet";
+import MapaEjemplo from "./MapaEjemplo";
 
 // Mapa de ejemplo para la portada. Usa los mismos mosaicos de OpenStreetMap que el panel
 // (gratis, sin API key). Los puntos y la ruta son inventados: solo ilustran la idea.
@@ -33,6 +35,18 @@ const PERSONAS = [
 const TU: [number, number] = [-33.4352, -70.6455];
 
 export default function MapaLeafletLanding() {
+  // El mapa se crea solo cuando el componente está montado. Si la página se oculta y
+  // se vuelve a mostrar (al cerrar sesión), el mapa viejo se destruye y se crea uno nuevo
+  // con otra "key"; así Leaflet nunca reutiliza un contenedor ya destruido.
+  const [montaje, setMontaje] = useState(0);
+
+  useEffect(() => {
+    setMontaje((n) => n + 1);
+    return () => setMontaje(0);
+  }, []);
+
+  if (montaje === 0) return <MapaEjemplo />;
+
   return (
     <figure>
       <div
@@ -41,6 +55,7 @@ export default function MapaLeafletLanding() {
         className="aspect-[5/4] overflow-hidden rounded-2xl border border-slate-200 shadow-sm [&_.leaflet-tile-pane]:grayscale-[0.9] [&_.leaflet-tile-pane]:contrast-[0.85] [&_.leaflet-tile-pane]:brightness-[1.1]"
       >
         <MapContainer
+          key={montaje}
           center={CENTRO}
           zoom={window.innerWidth < 640 ? 13 : 14}
           zoomControl={false}
