@@ -7,7 +7,7 @@ import { cerrarConvocatoria as cerrarEnApi, listarConvocatorias, publicarConvoca
 import { listarTodosPostulantes, actualizarPostulante } from "./api/postulantes";
 import { listarAvisos, publicarAviso } from "./api/avisos";
 import { ApiError } from "./api/cliente";
-import { mapAviso, mapClub, mapConvocatoria, mapPostulante } from "./datos-mapeo.mjs";
+import { instagramAGuardar, mapAviso, mapClub, mapConvocatoria, mapPostulante, opcional, webAGuardar } from "./datos-mapeo.mjs";
 
 export type EstadoPostulante = "Pendiente" | "Preseleccionado" | "Aceptado" | "Rechazado";
 export const ESTADOS: EstadoPostulante[] = ["Pendiente", "Preseleccionado", "Aceptado", "Rechazado"];
@@ -134,11 +134,11 @@ export function actualizarClub(id: string, cambios: Partial<Club>): void {
     try {
       const datos: Record<string, unknown> = {};
       if (cambios.nombre !== undefined) datos.nombre = cambios.nombre;
-      if (cambios.descripcion !== undefined) datos.descripcion = cambios.descripcion;
-      if (cambios.email !== undefined) datos.email_contacto = cambios.email;
-      if (cambios.telefono !== undefined) datos.telefono = cambios.telefono;
-      if (cambios.instagram !== undefined) datos.redes_sociales = { instagram: cambios.instagram };
-      if (cambios.web !== undefined) datos.sitio_web = cambios.web;
+      if (cambios.descripcion !== undefined) datos.descripcion = opcional(cambios.descripcion);
+      if (cambios.email !== undefined) datos.email_contacto = opcional(cambios.email);
+      if (cambios.telefono !== undefined) datos.telefono = opcional(cambios.telefono);
+      if (cambios.instagram !== undefined) datos.redes_sociales = { instagram: instagramAGuardar(cambios.instagram) };
+      if (cambios.web !== undefined) datos.sitio_web = webAGuardar(cambios.web);
       if (cambios.logoUrl !== undefined && (!cambios.logoUrl || /^https:\/\//.test(cambios.logoUrl))) datos.logo = cambios.logoUrl || null;
       const deportes = cambios.deportes;
       if (deportes) {
