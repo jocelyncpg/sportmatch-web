@@ -11,7 +11,8 @@ import { mapAviso, mapClub, mapConvocatoria, mapPostulante } from "./datos-mapeo
 
 export type EstadoPostulante = "Pendiente" | "Preseleccionado" | "Aceptado" | "Rechazado";
 export const ESTADOS: EstadoPostulante[] = ["Pendiente", "Preseleccionado", "Aceptado", "Rechazado"];
-export const DEPORTES = ["Fútbol", "Básquetbol", "Vóleibol", "Natación", "Tenis", "Running", "Ciclismo", "Escalada", "Boxeo", "Yoga", "Pádel", "Atletismo"];
+// Catálogo de Ms-club (GET /clubs/deportes): un deporte fuera de él no se puede guardar.
+export const DEPORTES = ["Atletismo", "Básquetbol", "Ciclismo", "Fútbol", "Natación", "Running", "Tenis", "Trekking", "Vóleibol", "Yoga"];
 export interface Club { id: string; nombre: string; descripcion: string; zona: string; deportes: string[]; email: string; telefono: string; instagram: string; web: string; logoUrl: string }
 export interface Convocatoria { id: string; clubId: string; titulo: string; deporte: string; categoria: string; fecha: string; requisitos: string; cupos: number; estado: "abierta" | "cerrada" }
 export type Nivel = "Principiante" | "Intermedio" | "Avanzado";
@@ -34,7 +35,9 @@ const reemplazar = (cambios: Partial<Datos>) => { estado = { ...estado, ...cambi
 const nuevoId = (prefijo: string) => `${prefijo}${Date.now().toString(36)}${Math.random().toString(36).slice(2, 5)}`;
 
 function registrarError(error: unknown) {
-  const detalle = error instanceof ApiError ? `HTTP ${error.status}` : error instanceof Error ? error.name : "Error";
+  // El mensaje es del backend o de las validaciones propias; nunca trae datos de sesión.
+  const detalle = error instanceof ApiError ? `HTTP ${error.status}: ${error.message}`
+    : error instanceof Error ? error.message : "Error";
   console.error("No se pudo sincronizar con el backend:", detalle);
 }
 
@@ -162,7 +165,10 @@ export function crearConvocatoria(d: Omit<Convocatoria, "id" | "estado">): void 
     try {
       const deportes = await listarDeportes();
       const deporte = deportes.find((item) => item.nombre === d.deporte);
-      if (!deporte) throw new Error("Deporte no disponible");
+      if (!deporte) throw new Error(`El deporte «${d.deporte}» no está en el catálogo.`);
+      // Ms-club solo publica convocatorias de deportes que el club ofrece: si falta, se agrega.
+      const propio = estado.clubes.find((club) => club.id === CLUB_DEMO_ID);
+      if (propio && !propio.deportes.includes(deporte.nombre)) await agregarDeporte(clubRealId!, deporte.id);
       const creada = await publicarConvocatoria(clubRealId!, {
         deporte_id: deporte.id,
         categoria_edad: d.categoria,
