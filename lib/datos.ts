@@ -157,6 +157,16 @@ export function actualizarClub(id: string, cambios: Partial<Club>): void {
   })();
 }
 
+// El formulario solo pide el día; Ms-club exige fecha y hora con su zona (ej. 2026-11-07T18:00:00-03:00).
+function fechaConZona(dia: string): string {
+  const local = new Date(`${dia}T18:00:00`);
+  const minutos = -local.getTimezoneOffset();
+  const signo = minutos >= 0 ? "+" : "-";
+  const horas = String(Math.floor(Math.abs(minutos) / 60)).padStart(2, "0");
+  const resto = String(Math.abs(minutos) % 60).padStart(2, "0");
+  return `${dia}T18:00:00${signo}${horas}:${resto}`;
+}
+
 export function crearConvocatoria(d: Omit<Convocatoria, "id" | "estado">): void {
   const temporal: Convocatoria = { ...d, id: nuevoId("v"), estado: "abierta" };
   reemplazar({ convocatorias: [temporal, ...estado.convocatorias] });
@@ -172,7 +182,7 @@ export function crearConvocatoria(d: Omit<Convocatoria, "id" | "estado">): void 
       const creada = await publicarConvocatoria(clubRealId!, {
         deporte_id: deporte.id,
         categoria_edad: d.categoria,
-        fecha_prueba: new Date(`${d.fecha}T12:00:00`).toISOString(),
+        fecha_prueba: fechaConZona(d.fecha),
         requisitos: d.requisitos.split(",").map((parte) => parte.trim()).filter(Boolean),
         cupos: d.cupos,
         direccion: estado.clubes.find((club) => club.id === CLUB_DEMO_ID)?.zona || "Dirección del club",
