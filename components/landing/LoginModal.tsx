@@ -12,7 +12,7 @@ import {
   useRef,
   useState,
 } from "react";
-import { login } from "@/lib/sesion";
+import { login } from "@/lib/auth";
 
 interface Ctx {
   abrir: () => void;
@@ -225,6 +225,9 @@ export function LoginModalProvider({
             >
               Regístrate desde la app
             </a>
+          </p>
+          <p className="mt-4 text-center text-xs text-muted">
+            Demo: club@sportmatch.cl · demo1234
           </p>
         </div>
       </dialog>

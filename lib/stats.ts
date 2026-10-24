@@ -1,4 +1,4 @@
-import { ESTADOS, NIVELES, type Convocatoria, type Postulante } from "./store.mock";
+import { ESTADOS, NIVELES, type Convocatoria, type Postulante } from "./datos";
 
 const DIA = 86_400_000;
 const aFecha = (t: number) => new Date(t).toISOString().slice(0, 10);
