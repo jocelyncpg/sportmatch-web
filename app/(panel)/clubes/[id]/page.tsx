@@ -2,7 +2,9 @@
 
 import Link from "next/link";
 import { useParams } from "next/navigation";
+import Mapa from "@/components/Mapa";
 import { Avatar, Card, Chip, PageHeader, fechaCorta } from "@/components/ui";
+import { COMUNAS } from "@/lib/comunas";
 import { useDatos } from "@/lib/store.mock";
 
 // HU-30: perfil público con descripción, fotos, ubicación y convocatorias abiertas.
@@ -31,7 +33,7 @@ export default function PerfilPublicoPage() {
       <Card className="mb-4 flex items-center gap-4">
         <Avatar nombre={club.nombre} logoUrl={club.logoUrl} size={64} />
         <div>
-          <h1 className="text-xl font-extrabold">{club.nombre}</h1>
+          <h1 className="text-xl font-bold">{club.nombre}</h1>
           <p className="text-sm text-muted">{club.zona}</p>
         </div>
       </Card>
@@ -55,6 +57,17 @@ export default function PerfilPublicoPage() {
           <Fila etiqueta="Instagram" valor={club.instagram} />
           <Fila etiqueta="Sitio web" valor={club.web} />
         </dl>
+        {COMUNAS[club.zona] ? (
+          <div className="mt-4">
+            <Mapa
+              alto={240}
+              centro={COMUNAS[club.zona]}
+              zoom={14}
+              puntos={[{ id: club.id, nombre: club.nombre, detalle: club.zona, coord: COMUNAS[club.zona] }]}
+            />
+            <p className="mt-2 text-xs text-muted">Ubicación aproximada de la comuna.</p>
+          </div>
+        ) : null}
       </Card>
 
       <Card className="mb-4">

@@ -1,13 +1,10 @@
 @import "tailwindcss";
+@import "leaflet/dist/leaflet.css";
 
-<<<<<<< Updated upstream
-/* Mismos colores que theme/ThemeContext de la app móvil.
-   Igual que la app: oscuro por defecto, claro solo si el sistema está en claro. */
-=======
 /* Colores del panel. Oscuro y claro comparten la misma marca morada de la app móvil.
    El atributo data-theme lo pone ThemeProvider (claro / oscuro / sistema); por defecto, claro. */
->>>>>>> Stashed changes
 :root {
+  color-scheme: dark;
   --bg: #0b0f19;
   --card: #161c2a;
   --border: #262e40;
@@ -25,26 +22,6 @@
   --overlay: rgba(0, 0, 0, 0.6);
 }
 
-<<<<<<< Updated upstream
-@media (prefers-color-scheme: light) {
-  :root {
-    --bg: #f5f6fa;
-    --card: #ffffff;
-    --border: #e2e5ec;
-    --text: #111827;
-    --muted: #6b7280;
-    --primary: #7c3aed;
-    --accent: #7c3aed;
-    --input-bg: #ffffff;
-    --chip: #efeafe;
-    --subtle: #eef0f5;
-    --danger: #dc2626;
-    --danger-bg: #fee2e2;
-    --success: #16a34a;
-    --success-bg: #dcfce7;
-    --overlay: rgba(0, 0, 0, 0.4);
-  }
-=======
 /* Claro: mismo estilo de la portada (blanco, bordes finos, texto azul oscuro). */
 :root[data-theme="light"],
 .forzar-claro {
@@ -64,7 +41,6 @@
   --success: #16a34a;
   --success-bg: #dcfce7;
   --overlay: rgba(15, 23, 42, 0.45);
->>>>>>> Stashed changes
 }
 
 @theme inline {
@@ -82,18 +58,27 @@
   --color-danger-bg: var(--danger-bg);
   --color-success: var(--success);
   --color-success-bg: var(--success-bg);
+  --color-overlay: var(--overlay);
 }
 
 body {
   background: var(--bg);
   color: var(--text);
   font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  font-variant-numeric: tabular-nums;
 }
-
 
 /* Logo: versión con texto blanco en oscuro, con texto oscuro en claro */
 .logo-light { display: none; }
-@media (prefers-color-scheme: light) {
-  .logo-dark { display: none; }
-  .logo-light { display: block; }
-}
+:root[data-theme="light"] .logo-dark { display: none; }
+:root[data-theme="light"] .logo-light { display: block; }
+
+/* Mapa (Leaflet) */
+.leaflet-container { background: var(--subtle); font-family: inherit; }
+.leaflet-container a { color: var(--accent); }
+.leaflet-control-attribution { background: color-mix(in srgb, var(--card) 80%, transparent) !important; color: var(--muted) !important; }
+.leaflet-tooltip { background: var(--card); color: var(--text); border: 1px solid var(--border); box-shadow: none; border-radius: 8px; font-size: 12px; }
+.leaflet-tooltip-top:before { border-top-color: var(--border); }
+
+/* Mapa oscuro: se invierten los mosaicos claros de OpenStreetMap */
+.mapa-oscuro .leaflet-tile-pane { filter: invert(1) hue-rotate(180deg) brightness(0.95) contrast(0.9); }

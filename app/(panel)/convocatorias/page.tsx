@@ -1,8 +1,20 @@
 "use client";
 
+import { CalendarDays, Megaphone } from "lucide-react";
 import { useState } from "react";
 import { SoloRol } from "@/components/SesionContext";
-import { Campo, Card, Chip, PageHeader, btnGhost, btnPrimary, fechaCorta, inputClass } from "@/components/ui";
+import {
+  Campo,
+  Card,
+  Chip,
+  EstadoVacio,
+  PageHeader,
+  ProgressBar,
+  btnGhost,
+  btnPrimary,
+  fechaCorta,
+  inputClass,
+} from "@/components/ui";
 import { CLUB_DEMO_ID, DEPORTES, cerrarConvocatoria, crearConvocatoria, useDatos } from "@/lib/store.mock";
 
 // HU-32: formulario de convocatoria (categoría/edad, deporte, fecha, requisitos y cupos) y publicación.
@@ -107,7 +119,11 @@ function Contenido() {
 
       <h2 className="mb-3 mt-8 text-sm font-bold">Tus convocatorias</h2>
       {mias.length === 0 ? (
-        <p className="text-sm text-muted">Aún no has publicado convocatorias.</p>
+        <EstadoVacio
+          icono={Megaphone}
+          titulo="Aún no hay convocatorias"
+          texto="Usa el formulario de arriba para publicar tu primera convocatoria."
+        />
       ) : (
         <div className="space-y-3">
           {mias.map((c) => {
@@ -118,8 +134,8 @@ function Contenido() {
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div>
                     <p className="font-bold">{c.titulo}</p>
-                    <p className="text-xs text-muted">
-                      {c.categoria} · {fechaCorta(c.fecha)}
+                    <p className="mt-0.5 flex items-center gap-1.5 text-xs text-muted">
+                      <CalendarDays size={13} /> {fechaCorta(c.fecha)} · {c.categoria}
                     </p>
                   </div>
                   <div className="flex items-center gap-2">
@@ -134,10 +150,14 @@ function Contenido() {
                   </div>
                 </div>
                 <p className="mt-2 text-sm">{c.requisitos}</p>
-                <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
-                  <p className="text-xs font-semibold text-muted">
-                    {aceptados}/{c.cupos} cupos ocupados · {total} postulantes
-                  </p>
+                <div className="mt-4">
+                  <div className="mb-1.5 flex justify-between text-xs font-semibold text-muted">
+                    <span>{total} postulantes</span>
+                    <span>{aceptados}/{c.cupos} cupos ocupados</span>
+                  </div>
+                  <ProgressBar valor={aceptados} max={c.cupos} />
+                </div>
+                <div className="mt-4 flex justify-end">
                   {c.estado === "abierta" ? (
                     <button type="button" className={btnGhost} onClick={() => cerrarConvocatoria(c.id)}>
                       Cerrar convocatoria

@@ -1,20 +1,17 @@
+"use client";
+
+import type { LucideIcon } from "lucide-react";
 import Image from "next/image";
+import { useState } from "react";
+import type { EstadoReporte } from "@/lib/moderacion.mock";
 import type { EstadoPostulante } from "@/lib/store.mock";
 
 export const inputClass =
-<<<<<<< Updated upstream
-  "w-full rounded-[13px] border border-border bg-input px-3.5 py-3 text-sm outline-none focus:border-accent";
-export const btnPrimary =
-  "rounded-[13px] bg-primary px-5 py-3 text-sm font-bold text-white disabled:opacity-60";
-export const btnGhost =
-  "rounded-[13px] border border-border bg-card px-4 py-2.5 text-sm font-semibold hover:border-accent";
-=======
   "w-full rounded-xl border border-border bg-input px-4 py-3 text-sm outline-none focus:border-accent";
 export const btnPrimary =
   "rounded-full bg-primary px-6 py-3 text-sm font-bold text-white transition hover:brightness-110 disabled:opacity-60";
 export const btnGhost =
   "rounded-full border border-border bg-card px-5 py-2.5 text-sm font-semibold transition-colors hover:border-accent";
->>>>>>> Stashed changes
 
 export function PageHeader({
   titulo,
@@ -28,24 +25,30 @@ export function PageHeader({
   return (
     <div className="mb-8 flex flex-wrap items-end justify-between gap-3">
       <div>
-<<<<<<< Updated upstream
-        <h1 className="text-2xl font-extrabold">{titulo}</h1>
-        {subtitulo ? <p className="mt-1 text-sm text-muted">{subtitulo}</p> : null}
-=======
         <h1 className="text-4xl font-extrabold uppercase leading-none tracking-[0.005em] [font-family:var(--font-titulo)] sm:text-5xl">
           {titulo}
         </h1>
         {subtitulo ? <p className="mt-2 text-base text-muted">{subtitulo}</p> : null}
->>>>>>> Stashed changes
       </div>
       {accion}
     </div>
   );
 }
 
-export function Card({ children, className = "" }: { children: React.ReactNode; className?: string }) {
+// flush = sin relleno interno (para tablas y listas que llegan hasta el borde)
+export function Card({
+  children,
+  className = "",
+  flush = false,
+}: {
+  children: React.ReactNode;
+  className?: string;
+  flush?: boolean;
+}) {
   return (
-    <div className={`rounded-[18px] border border-border bg-card p-5 ${className}`}>{children}</div>
+    <div className={`rounded-2xl border border-border bg-card ${flush ? "" : "p-5"} ${className}`}>
+      {children}
+    </div>
   );
 }
 
@@ -68,26 +71,73 @@ export function Chip({
   );
 }
 
-const COLOR_ESTADO: Record<EstadoPostulante, string> = {
-  Pendiente: "bg-subtle text-muted",
-  Preseleccionado: "bg-chip text-accent",
-  Aceptado: "bg-success-bg text-success",
-  Rechazado: "bg-danger-bg text-danger",
+// Colores de cada estado; los gráficos usan los mismos para que todo coincida.
+export const COLOR_ESTADO: Record<EstadoPostulante, string> = {
+  Pendiente: "var(--muted)",
+  Preseleccionado: "var(--accent)",
+  Aceptado: "var(--success)",
+  Rechazado: "var(--danger)",
 };
 
 export function BadgeEstado({ estado }: { estado: EstadoPostulante }) {
   return (
-    <span className={`rounded-full px-3 py-1 text-xs font-bold ${COLOR_ESTADO[estado]}`}>{estado}</span>
+    <span className="inline-flex items-center gap-1.5 text-xs font-semibold">
+      <span className="h-2 w-2 rounded-full" style={{ background: COLOR_ESTADO[estado] }} />
+      {estado}
+    </span>
   );
 }
 
-export function Avatar({ nombre, logoUrl, size = 44 }: { nombre: string; logoUrl?: string; size?: number }) {
+// Estado de un reporte de moderación: mismo estilo que BadgeEstado (punto de color + texto).
+const COLOR_REPORTE: Record<EstadoReporte, { color: string; texto: string }> = {
+  pendiente: { color: "var(--danger)", texto: "Pendiente" },
+  revisado: { color: "var(--success)", texto: "Revisado" },
+  escalado: { color: "var(--accent)", texto: "Escalado a sanción" },
+};
+
+export function BadgeReporte({ estado }: { estado: EstadoReporte }) {
+  const c = COLOR_REPORTE[estado];
+  return (
+    <span className="inline-flex items-center gap-1.5 text-xs font-semibold">
+      <span className="h-2 w-2 rounded-full" style={{ background: c.color }} />
+      {c.texto}
+    </span>
+  );
+}
+
+export function Avatar({
+  nombre,
+  logoUrl,
+  foto,
+  size = 44,
+}: {
+  nombre: string;
+  logoUrl?: string;
+  foto?: string;
+  size?: number;
+}) {
+  const [fallo, setFallo] = useState(false);
   const iniciales = nombre
     .split(" ")
     .slice(0, 2)
     .map((p) => p[0])
     .join("")
     .toUpperCase();
+
+  if (foto && !fallo) {
+    return (
+      <div className="relative shrink-0 overflow-hidden rounded-full bg-subtle" style={{ width: size, height: size }}>
+        <Image
+          src={foto}
+          alt={nombre}
+          fill
+          sizes={`${size}px`}
+          className="object-cover object-top"
+          onError={() => setFallo(true)}
+        />
+      </div>
+    );
+  }
   if (logoUrl) {
     return (
       <Image
@@ -103,8 +153,8 @@ export function Avatar({ nombre, logoUrl, size = 44 }: { nombre: string; logoUrl
   }
   return (
     <div
-      style={{ width: size, height: size }}
-      className="flex shrink-0 items-center justify-center rounded-full bg-primary text-sm font-bold text-white"
+      style={{ width: size, height: size, fontSize: Math.max(11, Math.round(size / 3)) }}
+      className="flex shrink-0 items-center justify-center rounded-full bg-chip font-bold text-accent"
     >
       {iniciales}
     </div>
@@ -125,9 +175,6 @@ export const fechaCorta = (aaaammdd: string) =>
     day: "numeric",
     month: "short",
     year: "numeric",
-<<<<<<< Updated upstream
-  });
-=======
   });
 
 /** Fecha y hora de un instante ISO, para reportes y auditoría. */
@@ -181,4 +228,3 @@ export function EstadoVacio({
     </div>
   );
 }
->>>>>>> Stashed changes

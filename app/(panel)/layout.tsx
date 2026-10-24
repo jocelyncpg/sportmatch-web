@@ -1,7 +1,5 @@
 "use client";
 
-<<<<<<< Updated upstream
-=======
 import {
   BadgePercent,
   Bell,
@@ -18,25 +16,17 @@ import {
   X,
   type LucideIcon,
 } from "lucide-react";
->>>>>>> Stashed changes
 import Link from "next/link";
 import { Suspense, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import AuthGuard from "@/components/AuthGuard";
 import BrandLogo from "@/components/BrandLogo";
 import { SesionCtx } from "@/components/SesionContext";
+import ThemeToggle from "@/components/ThemeToggle";
+import { Avatar } from "@/components/ui";
 import { logout, type Rol } from "@/lib/auth.mock";
 import { fuenteTexto, fuenteTitulo } from "@/lib/fuentes";
 
-<<<<<<< Updated upstream
-const MENU: { href: string; label: string; roles: Rol[] }[] = [
-  { href: "/inicio", label: "Inicio", roles: ["club", "admin"] },
-  { href: "/clubes", label: "Directorio de clubes", roles: ["club", "admin"] },
-  { href: "/perfil", label: "Mi club", roles: ["club"] },
-  { href: "/convocatorias", label: "Convocatorias", roles: ["club"] },
-  { href: "/postulantes", label: "Postulantes", roles: ["club"] },
-  { href: "/avisos", label: "Avisos", roles: ["club"] },
-=======
 interface Item {
   href: string;
   label: string;
@@ -75,7 +65,6 @@ const GRUPOS: { titulo: string; items: Item[] }[] = [
       { href: "/auditoria", label: "Auditoría", icono: ScrollText, roles: ["admin"] },
     ],
   },
->>>>>>> Stashed changes
 ];
 
 function Panel({ children }: { children: React.ReactNode }) {
@@ -86,43 +75,6 @@ function Panel({ children }: { children: React.ReactNode }) {
   return (
     <AuthGuard>
       {(sesion) => {
-<<<<<<< Updated upstream
-        const items = MENU.filter((m) => m.roles.includes(sesion.rol));
-        return (
-          <SesionCtx.Provider value={sesion}>
-            <div className="flex min-h-screen">
-              <aside className="hidden w-64 shrink-0 flex-col border-r border-border bg-card p-5 md:flex">
-                <div className="mb-6">
-                  <BrandLogo width={170} />
-                </div>
-                <nav className="flex-1 space-y-1">
-                  {items.map((m) => {
-                    const activo = pathname.startsWith(m.href);
-                    return (
-                      <Link
-                        key={m.href}
-                        href={m.href}
-                        className={`block rounded-[13px] px-3 py-2.5 text-sm font-semibold ${
-                          activo ? "bg-chip text-accent" : "text-muted hover:text-text"
-                        }`}
-                      >
-                        {m.label}
-                      </Link>
-                    );
-                  })}
-                </nav>
-                <div className="border-t border-border pt-4 text-xs">
-                  <p className="font-semibold">{sesion.nombre}</p>
-                  <p className="mb-3 text-muted">{sesion.email}</p>
-                  <button
-                    onClick={() => {
-                      logout();
-                      router.replace("/login");
-                    }}
-                    className="font-semibold text-danger"
-                  >
-                    Cerrar sesión
-=======
         const grupos = GRUPOS.map((g) => ({
           ...g,
           items: g.items.filter((i) => i.roles.includes(sesion.rol)),
@@ -195,28 +147,9 @@ function Panel({ children }: { children: React.ReactNode }) {
                     className="ml-auto rounded-md p-2 hover:bg-subtle xl:hidden"
                   >
                     {abierto ? <X size={26} /> : <Menu size={26} />}
->>>>>>> Stashed changes
                   </button>
                 </div>
 
-<<<<<<< Updated upstream
-              <div className="min-w-0 flex-1">
-                <nav className="flex gap-2 overflow-x-auto border-b border-border bg-card p-3 md:hidden">
-                  {items.map((m) => (
-                    <Link
-                      key={m.href}
-                      href={m.href}
-                      className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-semibold ${
-                        pathname.startsWith(m.href) ? "bg-chip text-accent" : "text-muted"
-                      }`}
-                    >
-                      {m.label}
-                    </Link>
-                  ))}
-                </nav>
-                <main className="p-6 md:p-10">{children}</main>
-              </div>
-=======
                 {abierto ? (
                   <div id="menu-panel" className="border-t border-border bg-card px-5 pb-6 pt-3 xl:hidden">
                     <nav aria-label="Principal móvil" className="space-y-5">
@@ -262,7 +195,6 @@ function Panel({ children }: { children: React.ReactNode }) {
               </header>
 
               <main className="mx-auto w-full max-w-7xl px-5 py-10 sm:px-8 md:py-12">{children}</main>
->>>>>>> Stashed changes
             </div>
           </SesionCtx.Provider>
         );

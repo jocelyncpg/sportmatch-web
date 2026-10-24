@@ -1,11 +1,15 @@
 "use client";
 
+import { Users } from "lucide-react";
 import { useState } from "react";
 import { SoloRol } from "@/components/SesionContext";
-import { Avatar, BadgeEstado, Card, Chip, PageHeader, btnGhost, inputClass } from "@/components/ui";
-import { CLUB_DEMO_ID, ESTADOS, cambiarEstadoPostulante, useDatos, type EstadoPostulante } from "@/lib/store.mock";
+import PerfilPostulante from "@/components/PerfilPostulante";
+import PostulanteCard from "@/components/PostulanteCard";
+import { useGestionPostulantes } from "@/components/useGestionPostulantes";
+import { Chip, EstadoVacio, PageHeader, inputClass } from "@/components/ui";
+import { CLUB_DEMO_ID, ESTADOS, useDatos, type EstadoPostulante } from "@/lib/store.mock";
 
-// HU-34: lista de postulantes con filtros y estados; avisa al postulante en cada cambio.
+// HU-34: postulantes con perfil, filtros y estados; avisa al postulante en cada cambio.
 export default function PostulantesPage() {
   return (
     <SoloRol roles={["club"]}>
@@ -16,47 +20,39 @@ export default function PostulantesPage() {
 
 function Contenido() {
   const datos = useDatos();
+  const { mensaje, abierto, setAbierto, cambiar } = useGestionPostulantes();
   const [convocatoria, setConvocatoria] = useState("");
   const [estado, setEstado] = useState<EstadoPostulante | "">("");
-  const [mensaje, setMensaje] = useState("");
 
   const mias = datos.convocatorias.filter((c) => c.clubId === CLUB_DEMO_ID);
   const idsMias = new Set(mias.map((c) => c.id));
-
-  const lista = datos.postulantes.filter(
-    (p) =>
-      idsMias.has(p.convocatoriaId) &&
-      (!convocatoria || p.convocatoriaId === convocatoria) &&
-      (!estado || p.estado === estado)
-  );
-
-  function cambiar(id: string, convId: string, nuevo: EstadoPostulante) {
-    const conv = mias.find((c) => c.id === convId);
-    if (nuevo === "Aceptado" && conv) {
-      const ocupados = datos.postulantes.filter((p) => p.convocatoriaId === convId && p.estado === "Aceptado").length;
-      if (ocupados >= conv.cupos) {
-        setMensaje(`No quedan cupos en "${conv.titulo}".`);
-        return;
-      }
-    }
-    setMensaje(cambiarEstadoPostulante(id, nuevo));
-  }
+  const delClub = datos.postulantes.filter((p) => idsMias.has(p.convocatoriaId));
+  const base = delClub.filter((p) => !convocatoria || p.convocatoriaId === convocatoria);
+  const lista = base.filter((p) => !estado || p.estado === estado);
+  const abiertoP = delClub.find((p) => p.id === abierto);
+  const titulo = (id: string) => mias.find((c) => c.id === id)?.titulo;
 
   return (
-    <section className="max-w-4xl">
-      <PageHeader titulo="Postulantes" subtitulo="Evalúa perfiles y confirma a los seleccionados." />
+    <section>
+      <PageHeader titulo="Postulantes" subtitulo="Revisa los perfiles y confirma a los seleccionados." />
 
-      <div className="mb-4 grid gap-3 md:grid-cols-2">
-        <select className={inputClass} value={convocatoria} onChange={(e) => setConvocatoria(e.target.value)}>
+      <div className="mb-5 flex flex-wrap items-center gap-3">
+        <select
+          className={`${inputClass} max-w-xs`}
+          value={convocatoria}
+          onChange={(e) => setConvocatoria(e.target.value)}
+        >
           <option value="">Todas las convocatorias</option>
           {mias.map((c) => (
             <option key={c.id} value={c.id}>{c.titulo}</option>
           ))}
         </select>
         <div className="flex flex-wrap items-center gap-2">
-          <Chip activo={estado === ""} onClick={() => setEstado("")}>Todos</Chip>
+          <Chip activo={estado === ""} onClick={() => setEstado("")}>Todos · {base.length}</Chip>
           {ESTADOS.map((e) => (
-            <Chip key={e} activo={estado === e} onClick={() => setEstado(e)}>{e}</Chip>
+            <Chip key={e} activo={estado === e} onClick={() => setEstado(e)}>
+              {e} · {base.filter((p) => p.estado === e).length}
+            </Chip>
           ))}
         </div>
       </div>
@@ -66,46 +62,33 @@ function Contenido() {
       ) : null}
 
       {lista.length === 0 ? (
-        <p className="text-sm text-muted">No hay postulantes con estos filtros.</p>
+        <EstadoVacio
+          icono={Users}
+          titulo="Sin postulantes"
+          texto="No hay postulantes que coincidan con los filtros seleccionados."
+        />
       ) : (
-        <div className="space-y-3">
-          {lista.map((p) => {
-            const conv = mias.find((c) => c.id === p.convocatoriaId);
-            return (
-              <Card key={p.id} className="flex flex-wrap items-center gap-4">
-                <Avatar nombre={p.nombre} />
-                <div className="min-w-0 flex-1">
-                  <p className="font-bold">{p.nombre}</p>
-                  <p className="text-xs text-muted">
-                    {p.nivel} · {p.comuna} · {conv?.titulo}
-                  </p>
-                </div>
-                <BadgeEstado estado={p.estado} />
-                <div className="flex gap-2">
-                  {p.estado !== "Preseleccionado" && p.estado !== "Aceptado" ? (
-                    <button className={btnGhost} onClick={() => cambiar(p.id, p.convocatoriaId, "Preseleccionado")}>
-                      Preseleccionar
-                    </button>
-                  ) : null}
-                  {p.estado !== "Aceptado" ? (
-                    <button className={btnGhost} onClick={() => cambiar(p.id, p.convocatoriaId, "Aceptado")}>
-                      Aceptar
-                    </button>
-                  ) : null}
-                  {p.estado !== "Rechazado" ? (
-                    <button
-                      className={`${btnGhost} text-danger`}
-                      onClick={() => cambiar(p.id, p.convocatoriaId, "Rechazado")}
-                    >
-                      Rechazar
-                    </button>
-                  ) : null}
-                </div>
-              </Card>
-            );
-          })}
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+          {lista.map((p) => (
+            <PostulanteCard
+              key={p.id}
+              p={p}
+              convocatoria={titulo(p.convocatoriaId)}
+              onVer={() => setAbierto(p.id)}
+              onCambiar={(n) => cambiar(p.id, n)}
+            />
+          ))}
         </div>
       )}
+
+      {abiertoP ? (
+        <PerfilPostulante
+          p={abiertoP}
+          convocatoria={titulo(abiertoP.convocatoriaId)}
+          onCerrar={() => setAbierto(null)}
+          onCambiar={(n) => cambiar(abiertoP.id, n)}
+        />
+      ) : null}
     </section>
   );
 }
