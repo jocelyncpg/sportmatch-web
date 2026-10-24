@@ -57,6 +57,20 @@ export async function listarPostulantes(
   return apiGw(`${ruta}${queryString(filtros)}`);
 }
 
+// Ms-club acepta como máximo 50 por página (PAGE_SIZE_MAX); se recorren todas las páginas.
+export const POSTULANTES_POR_PAGINA = 50;
+
+export async function listarTodosPostulantes(convocatoriaId: string): Promise<CandidatoPage> {
+  const primera = await listarPostulantes(convocatoriaId, { page: 1, page_size: POSTULANTES_POR_PAGINA });
+  const items = [...primera.items];
+  const paginas = Math.ceil(primera.total / POSTULANTES_POR_PAGINA);
+  for (let page = 2; page <= paginas; page++) {
+    const siguiente = await listarPostulantes(convocatoriaId, { page, page_size: POSTULANTES_POR_PAGINA });
+    items.push(...siguiente.items);
+  }
+  return { ...primera, items };
+}
+
 export async function actualizarPostulante(
   postulacionId: string,
   estado: EstadoRevision,

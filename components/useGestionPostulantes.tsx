@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { actualizarPostulante, listarPostulantes, type Candidato, type EstadoRevision } from "@/lib/api/postulantes";
+import { actualizarPostulante, listarTodosPostulantes, type Candidato, type EstadoRevision } from "@/lib/api/postulantes";
 
 // Lógica compartida (inicio y postulantes): cambiar estado respetando cupos y abrir el perfil.
 export function useGestionPostulantes(clubId = "", convocatoriaIds: string[] = []) {
@@ -16,7 +16,7 @@ export function useGestionPostulantes(clubId = "", convocatoriaIds: string[] = [
     setCargando(true); setError("");
     try {
       const paginas = await Promise.all(ids.split("|").filter(Boolean).map(async (id) => {
-        const page = await listarPostulantes(id, { page_size: 100 });
+        const page = await listarTodosPostulantes(id);
         return page.items.map((p) => ({ ...p, convocatoriaId: id, convocatoriaTitulo: page.convocatoria.titulo ?? "Convocatoria" }));
       }));
       setPostulantes(paginas.flat());
