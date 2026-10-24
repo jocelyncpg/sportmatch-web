@@ -4,8 +4,6 @@ import {
   BadgePercent,
   Bell,
   Building2,
-  MessageCircle,
-  MessagesSquare,
   Flag,
   Gavel,
   LayoutDashboard,
@@ -26,9 +24,8 @@ import BrandLogo from "@/components/BrandLogo";
 import { SesionCtx } from "@/components/SesionContext";
 import ThemeToggle from "@/components/ThemeToggle";
 import { Avatar } from "@/components/ui";
-import { logout, type Rol } from "@/lib/sesion";
+import { logout, type Rol } from "@/lib/auth";
 import { fuenteTexto, fuenteTitulo } from "@/lib/fuentes";
-import { useClub } from "@/components/club/useClub";
 
 interface Item {
   href: string;
@@ -54,8 +51,6 @@ const GRUPOS: { titulo: string; items: Item[] }[] = [
       { href: "/convocatorias", label: "Convocatorias", icono: Megaphone, roles: ["club"] },
       { href: "/postulantes", label: "Postulantes", icono: Users, roles: ["club"] },
       { href: "/avisos", label: "Avisos", icono: Bell, roles: ["club"] },
-      { href: "/consultas", label: "Consultas", icono: MessageCircle, roles: ["club"] },
-      { href: "/canales", label: "Canales", icono: MessagesSquare, roles: ["club"] },
     ],
   },
   {
@@ -72,27 +67,6 @@ const GRUPOS: { titulo: string; items: Item[] }[] = [
   },
 ];
 
-function ClubDesktopItems({ pathname }: { pathname: string }) {
-  const { club, cargando } = useClub();
-  if (cargando || !club) return null;
-  const items = GRUPOS.find((g) => g.titulo === "Gestión del club")?.items ?? [];
-  return <>{items.map((m) => {
-    const activo = pathname.startsWith(m.href);
-    return <Link key={m.href} href={m.href} aria-current={activo ? "page" : undefined} className={`border-b-2 px-3 py-2 text-[15px] font-semibold transition-colors ${activo ? "border-primary text-text" : "border-transparent text-muted hover:text-text"}`}>{m.corto ?? m.label}</Link>;
-  })}</>;
-}
-
-function ClubMobileGroup({ pathname, onSelect }: { pathname: string; onSelect: () => void }) {
-  const { club, cargando } = useClub();
-  if (cargando || !club) return null;
-  const grupo = GRUPOS.find((g) => g.titulo === "Gestión del club");
-  if (!grupo) return null;
-  return <div><p className="mb-1 text-[11px] font-bold uppercase tracking-wider text-muted">{grupo.titulo}</p>{grupo.items.map((m) => {
-    const Icono = m.icono; const activo = pathname.startsWith(m.href);
-    return <Link key={m.href} href={m.href} onClick={onSelect} aria-current={activo ? "page" : undefined} className={`flex items-center gap-3 border-b border-border py-3.5 text-base font-semibold ${activo ? "text-accent" : "text-text"}`}><Icono size={18} />{m.label}</Link>;
-  })}</div>;
-}
-
 function Panel({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
@@ -108,7 +82,8 @@ function Panel({ children }: { children: React.ReactNode }) {
         const todos = grupos.flatMap((g) => g.items);
 
         const salir = () => {
-          void logout().finally(() => router.replace("/login"));
+          logout();
+          router.replace("/login");
         };
 
         return (
@@ -123,7 +98,7 @@ function Panel({ children }: { children: React.ReactNode }) {
                   </Link>
 
                   <nav aria-label="Principal" className="hidden flex-1 items-center gap-1 xl:flex">
-                    {todos.filter((m) => m.roles.includes("admin") || m.href === "/inicio" || m.href === "/clubes").map((m) => {
+                    {todos.map((m) => {
                       const activo = pathname.startsWith(m.href);
                       return (
                         <Link
@@ -140,7 +115,6 @@ function Panel({ children }: { children: React.ReactNode }) {
                         </Link>
                       );
                     })}
-                    {sesion.rol === "club" ? <ClubDesktopItems pathname={pathname} /> : null}
                   </nav>
 
                   <div className="ml-auto hidden items-center gap-3 xl:flex">
@@ -179,7 +153,7 @@ function Panel({ children }: { children: React.ReactNode }) {
                 {abierto ? (
                   <div id="menu-panel" className="border-t border-border bg-card px-5 pb-6 pt-3 xl:hidden">
                     <nav aria-label="Principal móvil" className="space-y-5">
-                      {grupos.filter((g) => g.titulo !== "Gestión del club").map((g) => (
+                      {grupos.map((g) => (
                         <div key={g.titulo}>
                           <p className="mb-1 text-[11px] font-bold uppercase tracking-wider text-muted">
                             {g.titulo}
@@ -204,7 +178,6 @@ function Panel({ children }: { children: React.ReactNode }) {
                           })}
                         </div>
                       ))}
-                      {sesion.rol === "club" ? <ClubMobileGroup pathname={pathname} onSelect={() => setAbierto(false)} /> : null}
                     </nav>
                     <div className="mt-5 flex items-center justify-between gap-3">
                       <ThemeToggle compacto />

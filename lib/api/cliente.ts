@@ -2,6 +2,7 @@
 
 import { errorBff } from "../servidor/core.mjs";
 import { queryString, validarTexto } from "./validaciones.mjs";
+import { olvidarSesion } from "../auth";
 
 export class ApiError extends Error {
   constructor(message: string, readonly status: number) {
@@ -36,7 +37,10 @@ export async function apiGw<T>(ruta: string, opciones: OpcionesApi = {}): Promis
   } catch {
     throw new ApiError("No se pudo conectar con el servicio. Inténtalo nuevamente.", 0);
   }
-  if (response.status === 401 && typeof window !== "undefined") window.location.replace("/login");
+  if (response.status === 401 && typeof window !== "undefined") {
+    olvidarSesion();
+    window.location.replace("/login");
+  }
   let payload: unknown;
   try {
     payload = response.status === 204 ? undefined : await response.json();
