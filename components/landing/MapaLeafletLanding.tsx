@@ -27,9 +27,21 @@ const RUTA: [number, number][] = [
 ];
 
 const PERSONAS = [
-  { texto: "Ciclismo · 1,2 km", coord: [-33.4309, -70.6366] as [number, number] },
-  { texto: "Running · 0,8 km", coord: [-33.4405, -70.6502] as [number, number] },
-  { texto: "Escalada · 2,4 km", coord: [-33.4262, -70.6168] as [number, number] },
+  {
+    texto: "Ciclismo · 1,2 km",
+    coord: [-33.4309, -70.6366] as [number, number],
+    lado: "bottom" as const,
+  },
+  {
+    texto: "Running · 0,8 km",
+    coord: [-33.4405, -70.6502] as [number, number],
+    lado: "top" as const,
+  },
+  {
+    texto: "Escalada · 2,4 km",
+    coord: [-33.4262, -70.6168] as [number, number],
+    lado: "left" as const,
+  },
 ];
 
 const TU: [number, number] = [-33.4352, -70.6455];
@@ -41,6 +53,7 @@ export default function MapaLeafletLanding() {
   const [montaje, setMontaje] = useState(0);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- el mapa debe crearse solo tras montar
     setMontaje((n) => n + 1);
     return () => setMontaje(0);
   }, []);
@@ -91,7 +104,17 @@ export default function MapaLeafletLanding() {
                 fillOpacity: 1,
               }}
             >
-              <Tooltip permanent direction="top" offset={[0, -8]}>
+              <Tooltip
+                permanent
+                direction={p.lado}
+                offset={
+                  p.lado === "top"
+                    ? [0, -8]
+                    : p.lado === "bottom"
+                      ? [0, 8]
+                      : [-8, 0]
+                }
+              >
                 <strong>{p.texto}</strong>
               </Tooltip>
             </CircleMarker>

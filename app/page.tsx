@@ -3,10 +3,14 @@ import type { Metadata } from "next";
 import { Barlow_Condensed, Inter } from "next/font/google";
 import Image from "next/image";
 import Link from "next/link";
+import QRCode from "qrcode";
 import FooterPublico from "@/components/landing/FooterPublico";
 import { LoginModalProvider } from "@/components/landing/LoginModal";
 import MapaInteractivo from "@/components/landing/MapaInteractivo";
 import NavbarPublica from "@/components/landing/NavbarPublica";
+import PantallaCarga from "@/components/landing/PantallaCarga";
+import QrDescarga from "@/components/landing/QrDescarga";
+import TelefonosApp from "@/components/landing/TelefonosApp";
 import RedirigirSiHaySesion from "@/components/RedirigirSiHaySesion";
 import { CONTACTO } from "@/lib/contacto";
 
@@ -74,38 +78,23 @@ const DEPORTES = [
   },
 ];
 
-// Perfiles de ejemplo (los mismos del catálogo de la app). No son usuarios reales.
-// Las fotos de la app miden ~280 px, por eso se muestran en tamaño moderado.
-const EJEMPLOS = [
-  { nombre: "Camila", deporte: "Fútbol", foto: "/landing/personas/camila.png" },
-  {
-    nombre: "Catalina",
-    deporte: "Yoga",
-    foto: "/landing/personas/catalina.png",
-  },
-  {
-    nombre: "Ignacia",
-    deporte: "Ciclismo",
-    foto: "/landing/personas/ignacia.png",
-  },
-];
-
 const CRITERIOS = ["Deporte", "Nivel", "Distancia", "Disponibilidad"];
 
 const PASOS = [
   {
     titulo: "Crea tu perfil deportivo",
     texto:
-      "Cuéntanos qué deportes practicas, tu nivel y en qué zona te mueves.",
+      "Cuéntanos qué deportes practicas, tu nivel, tus objetivos y cuándo puedes entrenar.",
   },
   {
-    titulo: "Descubre personas compatibles",
+    titulo: "Descubre tu match",
     texto:
-      "Te mostramos a quienes entrenan lo mismo que tú, cerca de ti y a tu ritmo.",
+      "Encuentra personas compatibles según tus deportes, nivel, ubicación y disponibilidad.",
   },
   {
-    titulo: "Conecta y organiza tu próximo entrenamiento",
-    texto: "Chatea con tus matches y ponte de acuerdo para salir a entrenar.",
+    titulo: "Conecta y entrena",
+    texto:
+      "Conversa, coordina tu próximo entrenamiento y comparte tu pasión por el deporte.",
   },
 ];
 
@@ -114,35 +103,46 @@ const btnPrimario =
 const btnSecundario =
   "inline-flex items-center justify-center rounded-full border-2 border-slate-900 px-8 py-4 text-base font-bold text-slate-900 transition-colors hover:bg-slate-900 hover:text-white active:bg-black focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7C3AED]";
 
-export default function Portada() {
+export default async function Portada() {
   const hayTiendas = Boolean(CONTACTO.appStore || CONTACTO.playStore);
+  const enlaceQr =
+    CONTACTO.descargaApp || CONTACTO.appStore || CONTACTO.playStore;
+  const imagenQr = enlaceQr
+    ? await QRCode.toDataURL(enlaceQr, {
+        errorCorrectionLevel: "M",
+        margin: 1,
+        width: 360,
+        color: { dark: "#0F172A", light: "#FFFFFF" },
+      })
+    : "";
 
   return (
     <div
-      className={`${fuenteTitulo.variable} ${fuenteTexto.variable} [font-family:var(--font-texto)]`}
+      className={`forzar-claro ${fuenteTitulo.variable} ${fuenteTexto.variable} [font-family:var(--font-texto)]`}
     >
       <LoginModalProvider>
         <div className="bg-white text-slate-900">
+          <PantallaCarga />
           <RedirigirSiHaySesion />
           <NavbarPublica />
 
           <main>
             {/* 1. Hero */}
             <section className="bg-white text-slate-900">
-              <div className="grid lg:min-h-[560px] lg:grid-cols-12">
-                <div className="flex flex-col justify-center px-5 py-14 sm:px-8 lg:col-span-7 lg:py-20 lg:pl-[max(2rem,calc((100vw-80rem)/2+2rem))] lg:pr-10">
-                  <p className="mb-5 text-base font-bold uppercase tracking-[0.2em] text-[#7C3AED] sm:text-lg">
+              <div className="mx-auto grid max-w-7xl items-center gap-10 px-5 py-12 sm:px-8 lg:grid-cols-12 lg:gap-14 lg:py-16">
+                <div className="lg:col-span-6">
+                  <p className="mb-4 text-sm font-bold uppercase tracking-[0.2em] text-[#7C3AED] sm:text-base">
                     Conecta · Entrena · Comparte
                   </p>
                   <h1
-                    className={`${titulo} text-6xl font-extrabold uppercase leading-[0.92] tracking-[-0.01em] sm:text-7xl lg:text-6xl xl:text-8xl`}
+                    className={`${titulo} text-5xl font-extrabold uppercase leading-[0.95] tracking-[-0.005em] sm:text-6xl xl:text-7xl`}
                   >
                     Encuentra con quién entrenar
                   </h1>
-                  <p className="mt-6 max-w-md text-xl leading-relaxed text-slate-600">
+                  <p className="mt-5 max-w-md text-lg leading-relaxed text-slate-600">
                     Personas con tu deporte, tu nivel y tus ganas.
                   </p>
-                  <div className="mt-9 flex flex-col gap-3 sm:flex-row">
+                  <div className="mt-8 flex flex-col gap-3 sm:flex-row">
                     <a href="#app" className={btnPrimario}>
                       Encuentra tu match
                     </a>
@@ -152,14 +152,14 @@ export default function Portada() {
                   </div>
                 </div>
 
-                <div className="relative min-h-[300px] lg:col-span-5 lg:min-h-0">
+                <div className="relative aspect-[4/3] overflow-hidden rounded-3xl lg:col-span-6">
                   <Image
                     src="/images/sports/hero-cycling.jpg"
                     alt="Grupo de ciclistas compitiendo en ruta"
                     fill
                     priority
                     quality={90}
-                    sizes="(min-width: 1024px) 42vw, 100vw"
+                    sizes="(min-width: 1024px) 600px, 100vw"
                     className="object-cover object-[50%_40%]"
                   />
                 </div>
@@ -172,7 +172,7 @@ export default function Portada() {
               className="mx-auto max-w-7xl scroll-mt-24 px-5 py-20 sm:px-8 lg:py-28"
             >
               <h2
-                className={`${titulo} max-w-2xl text-4xl font-extrabold uppercase leading-[0.98] tracking-[0.005em] sm:text-5xl lg:text-6xl`}
+                className={`${titulo} max-w-2xl text-3xl font-extrabold uppercase leading-[1] tracking-[0.005em] sm:text-4xl lg:text-5xl`}
               >
                 Encuentra tu próximo desafío
               </h2>
@@ -211,7 +211,7 @@ export default function Portada() {
               <div className="mx-auto grid max-w-7xl items-center gap-16 px-5 py-20 sm:px-8 lg:grid-cols-12 lg:py-28">
                 <div className="lg:col-span-6">
                   <h2
-                    className={`${titulo} text-4xl font-extrabold uppercase leading-[0.98] tracking-[0.005em] sm:text-5xl lg:text-6xl`}
+                    className={`${titulo} text-3xl font-extrabold uppercase leading-[1] tracking-[0.005em] sm:text-4xl lg:text-5xl`}
                   >
                     No tienes que entrenar solo
                   </h2>
@@ -237,38 +237,7 @@ export default function Portada() {
                 </div>
 
                 <div className="lg:col-span-6">
-                  <div className="flex items-start justify-center gap-5 sm:gap-8">
-                    {EJEMPLOS.map((p, i) => (
-                      <figure
-                        key={p.nombre}
-                        className={`flex flex-col items-center text-center ${
-                          i === 1 ? "mt-14" : ""
-                        }`}
-                      >
-                        <div className="relative aspect-square w-24 overflow-hidden rounded-full bg-slate-200 sm:w-32 xl:w-40">
-                          <Image
-                            src={p.foto}
-                            alt={`Perfil de ejemplo: ${p.nombre}, ${p.deporte}`}
-                            fill
-                            sizes="160px"
-                            className="object-cover"
-                          />
-                        </div>
-                        <figcaption className="mt-4">
-                          <p
-                            className={`${titulo} text-base font-bold sm:text-lg`}
-                          >
-                            {p.nombre}
-                          </p>
-                          <p className="text-sm text-slate-600">{p.deporte}</p>
-                        </figcaption>
-                      </figure>
-                    ))}
-                  </div>
-                  <p className="mt-10 text-center text-sm text-slate-500">
-                    Perfiles de ejemplo para ilustrar cómo se ve SportMatch. No
-                    son usuarios reales.
-                  </p>
+                  <MapaInteractivo />
                 </div>
               </div>
             </section>
@@ -281,11 +250,16 @@ export default function Portada() {
               <div className="grid items-center gap-14 lg:grid-cols-12 lg:gap-16">
                 <div className="lg:col-span-5">
                   <h2
-                    className={`${titulo} text-4xl font-extrabold uppercase leading-[0.98] tracking-[0.005em] sm:text-5xl lg:text-6xl`}
+                    className={`${titulo} text-3xl font-extrabold uppercase leading-[1] tracking-[0.005em] sm:text-4xl lg:text-5xl`}
                   >
-                    Cómo funciona
+                    Ok… pero ¿cómo funciona?
                   </h2>
-                  <ol className="mt-12 space-y-9">
+                  <p className="mt-5 max-w-lg text-lg leading-relaxed text-slate-600">
+                    Encontrar a alguien con quien entrenar nunca fue tan fácil.
+                    SportMatch te ayuda a conectar con personas que comparten tus
+                    deportes, tu nivel y tus ganas de superarse.
+                  </p>
+                  <ol className="mt-10 space-y-8">
                     {PASOS.map((p, i) => (
                       <li key={p.titulo} className="flex gap-5">
                         <span
@@ -309,7 +283,7 @@ export default function Portada() {
                 </div>
 
                 <div className="lg:col-span-7">
-                  <MapaInteractivo />
+                  <TelefonosApp />
                 </div>
               </div>
             </section>
@@ -332,7 +306,7 @@ export default function Portada() {
                 </div>
                 <div className="flex flex-col justify-center px-5 py-16 sm:px-8 lg:pl-16 lg:pr-[max(2rem,calc((100vw-80rem)/2+2rem))]">
                   <h2
-                    className={`${titulo} text-4xl font-extrabold uppercase leading-[0.98] tracking-[0.005em] sm:text-5xl lg:text-6xl`}
+                    className={`${titulo} text-3xl font-extrabold uppercase leading-[1] tracking-[0.005em] sm:text-4xl lg:text-5xl`}
                   >
                     Encuentra tu comunidad
                   </h2>
@@ -356,44 +330,47 @@ export default function Portada() {
             >
               <div className="grid items-center gap-8 lg:grid-cols-2">
                 <h2
-                  className={`${titulo} text-4xl font-extrabold uppercase leading-[0.98] tracking-[0.005em] sm:text-5xl lg:text-6xl`}
+                  className={`${titulo} text-3xl font-extrabold uppercase leading-[1] tracking-[0.005em] sm:text-4xl lg:text-5xl`}
                 >
                   Crea tu cuenta desde la app SportMatch
                 </h2>
-                <div>
-                  <p className="text-lg leading-relaxed text-slate-600">
-                    Tu perfil, tus matches y el chat viven en la app.
-                    Descárgala, regístrate y empieza a encontrar con quién
-                    entrenar.
-                  </p>
-                  {hayTiendas ? (
-                    <div className="mt-7 flex flex-wrap gap-3">
-                      {CONTACTO.appStore ? (
-                        <a
-                          href={CONTACTO.appStore}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="rounded-full bg-slate-900 px-7 py-3.5 text-sm font-bold text-white hover:bg-black"
-                        >
-                          Descargar en App Store
-                        </a>
-                      ) : null}
-                      {CONTACTO.playStore ? (
-                        <a
-                          href={CONTACTO.playStore}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="rounded-full bg-slate-900 px-7 py-3.5 text-sm font-bold text-white hover:bg-black"
-                        >
-                          Descargar en Google Play
-                        </a>
-                      ) : null}
-                    </div>
-                  ) : (
-                    <p className="mt-7 inline-block rounded-full border border-slate-300 px-5 py-2.5 text-sm font-bold text-slate-700">
-                      Próximamente en App Store y Google Play
+                <div className="flex flex-col gap-8 sm:flex-row sm:items-center">
+                  <QrDescarga imagen={imagenQr} />
+                  <div>
+                    <p className="text-lg leading-relaxed text-slate-600">
+                      Tu perfil, tus matches y el chat viven en la app.{" "}
+                      {enlaceQr ? "Escanea el código" : "Descárgala"}, regístrate
+                      y empieza a encontrar con quién entrenar.
                     </p>
-                  )}
+                    {hayTiendas ? (
+                      <div className="mt-6 flex flex-wrap gap-3">
+                        {CONTACTO.appStore ? (
+                          <a
+                            href={CONTACTO.appStore}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="rounded-full bg-slate-900 px-7 py-3.5 text-sm font-bold text-white hover:bg-black"
+                          >
+                            Descargar en App Store
+                          </a>
+                        ) : null}
+                        {CONTACTO.playStore ? (
+                          <a
+                            href={CONTACTO.playStore}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="rounded-full bg-slate-900 px-7 py-3.5 text-sm font-bold text-white hover:bg-black"
+                          >
+                            Descargar en Google Play
+                          </a>
+                        ) : null}
+                      </div>
+                    ) : (
+                      <p className="mt-6 inline-block rounded-full border border-slate-300 px-5 py-2.5 text-sm font-bold text-slate-700">
+                        Próximamente en App Store y Google Play
+                      </p>
+                    )}
+                  </div>
                 </div>
               </div>
             </section>
@@ -403,7 +380,7 @@ export default function Portada() {
               <div className="mx-auto flex max-w-7xl flex-col items-start justify-between gap-8 px-5 py-20 sm:px-8 md:flex-row md:items-center">
                 <div className="max-w-2xl">
                   <h2
-                    className={`${titulo} text-4xl font-extrabold uppercase leading-[0.98] tracking-[0.005em] sm:text-5xl lg:text-6xl`}
+                    className={`${titulo} text-3xl font-extrabold uppercase leading-[1] tracking-[0.005em] sm:text-4xl lg:text-5xl`}
                   >
                     Tu próxima historia deportiva empieza aquí.
                   </h2>
