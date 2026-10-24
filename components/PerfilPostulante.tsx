@@ -1,6 +1,6 @@
 "use client";
 
-import { MapPin, X } from "lucide-react";
+import { X } from "lucide-react";
 import { useEffect } from "react";
 import { Chip, btnGhost, fechaHora } from "@/components/ui";
 import type { EstadoRevision, Candidato } from "@/lib/api/postulantes";
@@ -55,7 +55,7 @@ export default function PerfilPostulante({
               <h2 className="text-xl font-bold">{nombre}</h2>
               <span className="text-xs font-semibold">{estado}</span>
             </div>
-            {p.perfil_deportivo.edad != null ? <p className="mt-1 flex items-center gap-1 text-sm text-muted"><MapPin size={14} /> {p.perfil_deportivo.edad} años</p> : null}
+            {p.perfil_deportivo.edad != null ? <p className="mt-1 flex items-center gap-1 text-sm text-muted">{p.perfil_deportivo.edad} años</p> : null}
           </div>
 
           <div>

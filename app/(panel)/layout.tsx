@@ -75,7 +75,7 @@ const GRUPOS: { titulo: string; items: Item[] }[] = [
 function ClubDesktopItems({ pathname }: { pathname: string }) {
   const { club, cargando } = useClub();
   if (cargando || !club) return null;
-  const items = GRUPOS.find((g) => g.titulo === "GestiÃ³n del club")?.items ?? [];
+  const items = GRUPOS.find((g) => g.titulo === "Gestión del club")?.items ?? [];
   return <>{items.map((m) => {
     const activo = pathname.startsWith(m.href);
     return <Link key={m.href} href={m.href} aria-current={activo ? "page" : undefined} className={`border-b-2 px-3 py-2 text-[15px] font-semibold transition-colors ${activo ? "border-primary text-text" : "border-transparent text-muted hover:text-text"}`}>{m.corto ?? m.label}</Link>;
@@ -85,7 +85,7 @@ function ClubDesktopItems({ pathname }: { pathname: string }) {
 function ClubMobileGroup({ pathname, onSelect }: { pathname: string; onSelect: () => void }) {
   const { club, cargando } = useClub();
   if (cargando || !club) return null;
-  const grupo = GRUPOS.find((g) => g.titulo === "GestiÃ³n del club");
+  const grupo = GRUPOS.find((g) => g.titulo === "Gestión del club");
   if (!grupo) return null;
   return <div><p className="mb-1 text-[11px] font-bold uppercase tracking-wider text-muted">{grupo.titulo}</p>{grupo.items.map((m) => {
     const Icono = m.icono; const activo = pathname.startsWith(m.href);
@@ -179,7 +179,7 @@ function Panel({ children }: { children: React.ReactNode }) {
                 {abierto ? (
                   <div id="menu-panel" className="border-t border-border bg-card px-5 pb-6 pt-3 xl:hidden">
                     <nav aria-label="Principal móvil" className="space-y-5">
-                      {grupos.filter((g) => g.titulo !== "GestiÃ³n del club").map((g) => (
+                      {grupos.filter((g) => g.titulo !== "Gestión del club").map((g) => (
                         <div key={g.titulo}>
                           <p className="mb-1 text-[11px] font-bold uppercase tracking-wider text-muted">
                             {g.titulo}
