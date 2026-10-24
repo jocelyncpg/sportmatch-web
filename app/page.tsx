@@ -101,7 +101,7 @@ const PASOS = [
 const btnPrimario =
   "inline-flex items-center justify-center rounded-full bg-[#7C3AED] px-8 py-4 text-base font-bold text-white transition-colors hover:bg-[#8B5CF6] active:bg-[#6D28D9] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7C3AED]";
 const btnSecundario =
-  "inline-flex items-center justify-center rounded-full border-2 border-slate-900 px-8 py-4 text-base font-bold text-slate-900 transition-colors hover:bg-slate-900 hover:text-white active:bg-black focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7C3AED]";
+  "inline-flex items-center justify-center rounded-full border-2 border-text px-8 py-4 text-base font-bold text-text transition-colors hover:bg-text hover:text-bg active:opacity-90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7C3AED]";
 
 export default async function Portada() {
   const hayTiendas = Boolean(CONTACTO.appStore || CONTACTO.playStore);
@@ -118,28 +118,25 @@ export default async function Portada() {
 
   return (
     <div
-      className={`forzar-claro ${fuenteTitulo.variable} ${fuenteTexto.variable} [font-family:var(--font-texto)]`}
+      className={`${fuenteTitulo.variable} ${fuenteTexto.variable} [font-family:var(--font-texto)]`}
     >
       <LoginModalProvider>
-        <div className="bg-white text-slate-900">
+        <div className="bg-bg text-text">
           <PantallaCarga />
           <RedirigirSiHaySesion />
           <NavbarPublica />
 
           <main>
             {/* 1. Hero */}
-            <section className="bg-white text-slate-900">
+            <section className="bg-bg text-text">
               <div className="mx-auto grid max-w-7xl items-center gap-10 px-5 py-12 sm:px-8 lg:grid-cols-12 lg:gap-14 lg:py-16">
                 <div className="lg:col-span-6">
-                  <p className="mb-4 text-sm font-bold uppercase tracking-[0.2em] text-[#7C3AED] sm:text-base">
-                    Conecta · Entrena · Comparte
-                  </p>
                   <h1
                     className={`${titulo} text-5xl font-extrabold uppercase leading-[0.95] tracking-[-0.005em] sm:text-6xl xl:text-7xl`}
                   >
                     Encuentra con quién entrenar
                   </h1>
-                  <p className="mt-5 max-w-md text-lg leading-relaxed text-slate-600">
+                  <p className="mt-5 max-w-md text-lg leading-relaxed text-muted">
                     Personas con tu deporte, tu nivel y tus ganas.
                   </p>
                   <div className="mt-8 flex flex-col gap-3 sm:flex-row">
@@ -176,7 +173,7 @@ export default async function Portada() {
               >
                 Encuentra tu próximo desafío
               </h2>
-              <p className="mt-5 max-w-xl text-lg text-slate-600">
+              <p className="mt-5 max-w-xl text-lg text-muted">
                 Más deportes, más personas con quienes practicarlos.
               </p>
 
@@ -184,7 +181,7 @@ export default async function Portada() {
                 {DEPORTES.map((d) => (
                   <li
                     key={d.nombre}
-                    className={`group relative h-64 overflow-hidden rounded-2xl bg-slate-200 sm:h-72 lg:h-[380px] ${d.span}`}
+                    className={`group relative h-64 overflow-hidden rounded-2xl bg-subtle sm:h-72 lg:h-[380px] ${d.span}`}
                   >
                     <Image
                       src={d.foto}
@@ -207,7 +204,7 @@ export default async function Portada() {
             </section>
 
             {/* 4. Matches */}
-            <section className="border-y border-slate-200 bg-slate-50">
+            <section className="border-y border-border bg-subtle">
               <div className="mx-auto grid max-w-7xl items-center gap-16 px-5 py-20 sm:px-8 lg:grid-cols-12 lg:py-28">
                 <div className="lg:col-span-6">
                   <h2
@@ -215,11 +212,11 @@ export default async function Portada() {
                   >
                     No tienes que entrenar solo
                   </h2>
-                  <p className="mt-6 max-w-lg text-lg leading-relaxed text-slate-600">
+                  <p className="mt-6 max-w-lg text-lg leading-relaxed text-muted">
                     SportMatch te muestra personas compatibles contigo. Tú
                     decides con quién conectar y cuándo salir a entrenar.
                   </p>
-                  <ul className="mt-9 divide-y divide-slate-200 border-y border-slate-200">
+                  <ul className="mt-9 divide-y divide-border border-y border-border">
                     {CRITERIOS.map((c) => (
                       <li
                         key={c}
@@ -254,7 +251,7 @@ export default async function Portada() {
                   >
                     Ok… pero ¿cómo funciona?
                   </h2>
-                  <p className="mt-5 max-w-lg text-lg leading-relaxed text-slate-600">
+                  <p className="mt-5 max-w-lg text-lg leading-relaxed text-muted">
                     Encontrar a alguien con quien entrenar nunca fue tan fácil.
                     SportMatch te ayuda a conectar con personas que comparten tus
                     deportes, tu nivel y tus ganas de superarse.
@@ -267,13 +264,13 @@ export default async function Portada() {
                         >
                           0{i + 1}
                         </span>
-                        <div className="border-t-2 border-slate-900 pt-3">
+                        <div className="border-t-2 border-text pt-3">
                           <h3
                             className={`${titulo} text-2xl font-bold leading-snug`}
                           >
                             {p.titulo}
                           </h3>
-                          <p className="mt-2 leading-relaxed text-slate-600">
+                          <p className="mt-2 leading-relaxed text-muted">
                             {p.texto}
                           </p>
                         </div>
@@ -337,7 +334,7 @@ export default async function Portada() {
                 <div className="flex flex-col gap-8 sm:flex-row sm:items-center">
                   <QrDescarga imagen={imagenQr} />
                   <div>
-                    <p className="text-lg leading-relaxed text-slate-600">
+                    <p className="text-lg leading-relaxed text-muted">
                       Tu perfil, tus matches y el chat viven en la app.{" "}
                       {enlaceQr ? "Escanea el código" : "Descárgala"}, regístrate
                       y empieza a encontrar con quién entrenar.
@@ -349,7 +346,7 @@ export default async function Portada() {
                             href={CONTACTO.appStore}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="rounded-full bg-slate-900 px-7 py-3.5 text-sm font-bold text-white hover:bg-black"
+                            className="rounded-full bg-text px-7 py-3.5 text-sm font-bold text-bg hover:opacity-90"
                           >
                             Descargar en App Store
                           </a>
@@ -359,14 +356,14 @@ export default async function Portada() {
                             href={CONTACTO.playStore}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="rounded-full bg-slate-900 px-7 py-3.5 text-sm font-bold text-white hover:bg-black"
+                            className="rounded-full bg-text px-7 py-3.5 text-sm font-bold text-bg hover:opacity-90"
                           >
                             Descargar en Google Play
                           </a>
                         ) : null}
                       </div>
                     ) : (
-                      <p className="mt-6 inline-block rounded-full border border-slate-300 px-5 py-2.5 text-sm font-bold text-slate-700">
+                      <p className="mt-6 inline-block rounded-full border border-border px-5 py-2.5 text-sm font-bold text-muted">
                         Próximamente en App Store y Google Play
                       </p>
                     )}

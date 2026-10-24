@@ -4,6 +4,7 @@ import { Menu, X } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
+import ThemeToggle from "@/components/ThemeToggle";
 import { BotonIniciarSesion } from "./LoginModal";
 
 const ENLACES = [
@@ -14,33 +15,44 @@ const ENLACES = [
 ];
 
 const link =
-  "rounded-md px-1 py-1 text-base font-semibold text-slate-700 transition-colors hover:text-black focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#8B5CF6]";
+  "whitespace-nowrap rounded-md px-1 py-1 text-[15px] font-semibold text-muted transition-colors hover:text-text focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#8B5CF6]";
 const btnIngresar =
-  "inline-flex items-center justify-center rounded-full border border-slate-900 px-7 py-3 text-base font-bold text-slate-900 transition-colors hover:bg-slate-900 hover:text-white active:bg-black focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#8B5CF6]";
+  "inline-flex items-center justify-center whitespace-nowrap rounded-full border border-text px-5 py-2.5 text-[15px] font-bold text-text transition-colors hover:bg-text hover:text-bg active:opacity-90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#8B5CF6]";
 const btnRegistro =
-  "inline-flex items-center justify-center rounded-full bg-[#7C3AED] px-7 py-3 text-base font-bold text-white transition-colors hover:bg-[#8B5CF6] active:bg-[#6D28D9] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-900";
+  "inline-flex items-center justify-center whitespace-nowrap rounded-full bg-[#7C3AED] px-5 py-2.5 text-[15px] font-bold text-white transition-colors hover:bg-[#8B5CF6] active:bg-[#6D28D9] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text";
+
+// Logo según el tema (ver .logo-dark / .logo-light en globals.css).
+const logo = "h-auto w-[190px] sm:w-[240px]";
 
 export default function NavbarPublica() {
   const [abierto, setAbierto] = useState(false);
   const cerrar = () => setAbierto(false);
 
   return (
-    <header className="sticky top-0 z-40 border-b border-slate-200 bg-white text-slate-900">
+    <header className="sticky top-0 z-40 border-b border-border bg-bg text-text">
       <div className="mx-auto flex h-24 max-w-7xl items-center justify-between px-5 sm:px-8">
         <Link href="/" aria-label="SportMatch, inicio" onClick={cerrar}>
+          <Image
+            src="/logo-dark.png"
+            alt="SportMatch"
+            width={300}
+            height={56}
+            priority
+            className={`logo-dark ${logo}`}
+          />
           <Image
             src="/logo-light.png"
             alt="SportMatch"
             width={300}
             height={56}
             priority
-            className="h-auto w-[190px] sm:w-[290px]"
+            className={`logo-light ${logo}`}
           />
         </Link>
 
         <nav
           aria-label="Principal"
-          className="hidden items-center gap-9 xl:flex"
+          className="hidden items-center gap-6 xl:flex"
         >
           {ENLACES.map((e) => (
             <a key={e.label} href={e.href} className={link}>
@@ -50,6 +62,7 @@ export default function NavbarPublica() {
         </nav>
 
         <div className="hidden items-center gap-3 xl:flex">
+          <ThemeToggle compacto />
           <BotonIniciarSesion className={btnIngresar}>
             Iniciar sesión
           </BotonIniciarSesion>
@@ -64,7 +77,7 @@ export default function NavbarPublica() {
           aria-expanded={abierto}
           aria-controls="menu-movil"
           onClick={() => setAbierto((v) => !v)}
-          className="rounded-md p-2 text-slate-900 hover:bg-slate-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#8B5CF6] xl:hidden"
+          className="rounded-md p-2 text-text hover:bg-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#8B5CF6] xl:hidden"
         >
           {abierto ? <X size={26} /> : <Menu size={26} />}
         </button>
@@ -73,7 +86,7 @@ export default function NavbarPublica() {
       {abierto ? (
         <div
           id="menu-movil"
-          className="border-t border-slate-200 bg-white px-5 pb-6 pt-2 xl:hidden"
+          className="border-t border-border bg-bg px-5 pb-6 pt-2 xl:hidden"
         >
           <nav aria-label="Principal móvil" className="flex flex-col">
             {ENLACES.map((e) => (
@@ -81,13 +94,16 @@ export default function NavbarPublica() {
                 key={e.label}
                 href={e.href}
                 onClick={cerrar}
-                className="border-b border-slate-200 py-4 text-base font-semibold text-slate-900"
+                className="border-b border-border py-4 text-base font-semibold text-text"
               >
                 {e.label}
               </a>
             ))}
           </nav>
-          <div className="mt-5 grid grid-cols-2 gap-3">
+          <div className="mt-5 flex justify-center">
+            <ThemeToggle compacto />
+          </div>
+          <div className="mt-4 grid grid-cols-2 gap-3">
             <BotonIniciarSesion className={btnIngresar} alAbrir={cerrar}>
               Iniciar sesión
             </BotonIniciarSesion>

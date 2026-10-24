@@ -82,3 +82,7 @@ body {
 
 /* Mapa oscuro: se invierten los mosaicos claros de OpenStreetMap */
 .mapa-oscuro .leaflet-tile-pane { filter: invert(1) hue-rotate(180deg) brightness(0.95) contrast(0.9); }
+
+/* Mapa de la portada: tonos suaves en claro; en oscuro se invierten los mosaicos */
+.mapa-landing .leaflet-tile-pane { filter: grayscale(0.9) contrast(0.85) brightness(1.1); }
+:root[data-theme="dark"] .mapa-landing .leaflet-tile-pane { filter: invert(1) hue-rotate(180deg) grayscale(0.7) brightness(0.9) contrast(0.9); }

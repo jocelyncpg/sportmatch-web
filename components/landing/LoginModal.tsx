@@ -21,7 +21,7 @@ const LoginModalCtx = createContext<Ctx>({ abrir: () => {} });
 export const useLoginModal = () => useContext(LoginModalCtx);
 
 const input =
-  "w-full rounded-lg border border-slate-300 bg-white px-4 py-3 text-base text-slate-900 outline-none transition-colors focus:border-[#7C3AED] focus:ring-2 focus:ring-[#7C3AED]/20";
+  "w-full rounded-lg border border-border bg-input px-4 py-3 text-base text-text outline-none transition-colors focus:border-[#7C3AED] focus:ring-2 focus:ring-[#7C3AED]/20";
 
 // Botón que abre el modal de inicio de sesión. Recibe las mismas clases que un enlace o botón.
 export function BotonIniciarSesion({
@@ -135,40 +135,47 @@ export function LoginModalProvider({
         onClick={(e) => {
           if (e.target === dialogo.current) cerrar();
         }}
-        className="m-auto w-[calc(100%-2rem)] max-w-md rounded-2xl bg-white/90 p-0 text-slate-900 shadow-2xl backdrop-blur-xl backdrop:bg-black/40 backdrop:backdrop-blur-sm"
+        className="m-auto w-[calc(100%-2rem)] max-w-md rounded-2xl bg-card p-0 text-text shadow-2xl backdrop:bg-black/40 backdrop:backdrop-blur-sm"
       >
         <div className="relative px-6 py-10 sm:px-10">
           <button
             type="button"
             onClick={cerrar}
             aria-label="Cerrar"
-            className="absolute right-3 top-3 rounded-md p-2 text-slate-500 transition-colors hover:bg-slate-100 hover:text-black focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#7C3AED]"
+            className="absolute right-3 top-3 rounded-md p-2 text-muted transition-colors hover:bg-subtle hover:text-text focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#7C3AED]"
           >
             <X size={22} />
           </button>
 
-          <Image
-            src="/logo-light.png"
-            alt="SportMatch"
-            width={220}
-            height={48}
-            className="mx-auto h-auto w-[220px]"
-          />
+          <div className="flex justify-center">
+            <Image
+              src="/logo-dark.png"
+              alt="SportMatch"
+              width={250}
+              height={47}
+              className="logo-dark h-auto w-[250px]"
+            />
+            <Image
+              src="/logo-light.png"
+              alt="SportMatch"
+              width={250}
+              height={47}
+              className="logo-light h-auto w-[250px]"
+            />
+          </div>
           <h2
             id="login-titulo"
             className="mt-8 text-center text-3xl font-extrabold tracking-[-0.02em] [font-family:var(--font-titulo)]"
           >
             Inicia sesión
           </h2>
-          <p className="mt-2 text-center text-sm text-slate-600">
+          <p className="mt-2 text-center text-sm text-muted">
             Panel para clubes y administración
           </p>
 
           <form onSubmit={onSubmit} className="mt-7 space-y-4">
             <label className="block space-y-1.5">
-              <span className="text-sm font-semibold text-slate-800">
-                Correo
-              </span>
+              <span className="text-sm font-semibold text-text">Correo</span>
               <input
                 type="email"
                 required
@@ -181,7 +188,7 @@ export function LoginModalProvider({
             </label>
 
             <label className="block space-y-1.5">
-              <span className="text-sm font-semibold text-slate-800">
+              <span className="text-sm font-semibold text-text">
                 Contraseña
               </span>
               <input
@@ -195,7 +202,7 @@ export function LoginModalProvider({
             </label>
 
             {error ? (
-              <p role="alert" className="text-sm font-semibold text-red-600">
+              <p role="alert" className="text-sm font-semibold text-danger">
                 {error}
               </p>
             ) : null}
@@ -209,17 +216,17 @@ export function LoginModalProvider({
             </button>
           </form>
 
-          <p className="mt-6 text-center text-sm text-slate-600">
+          <p className="mt-6 text-center text-sm text-muted">
             ¿Aún no tienes cuenta?{" "}
             <a
               href="#app"
               onClick={cerrar}
-              className="font-bold text-slate-900 underline underline-offset-4"
+              className="font-bold text-text underline underline-offset-4"
             >
               Regístrate desde la app
             </a>
           </p>
-          <p className="mt-4 text-center text-xs text-slate-400">
+          <p className="mt-4 text-center text-xs text-muted">
             Demo: club@sportmatch.cl · demo1234
           </p>
         </div>

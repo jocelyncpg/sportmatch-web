@@ -5,14 +5,14 @@ import Image from "next/image";
 export default function QrDescarga({ imagen }: { imagen: string }) {
   if (!imagen) {
     return (
-      <div className="flex h-36 w-36 shrink-0 self-start items-center justify-center rounded-2xl border-2 border-dashed border-slate-300 p-4 text-center text-xs font-semibold text-slate-500 sm:self-auto">
+      <div className="flex h-36 w-36 shrink-0 self-start items-center justify-center rounded-2xl border-2 border-dashed border-border p-4 text-center text-xs font-semibold text-muted sm:self-auto">
         El código QR aparecerá cuando la app esté publicada
       </div>
     );
   }
 
   return (
-    <div className="shrink-0 self-start rounded-2xl border border-slate-200 bg-white p-3 shadow-sm sm:self-auto">
+    <div className="shrink-0 self-start rounded-2xl border border-border bg-white p-3 shadow-sm sm:self-auto">
       <Image
         src={imagen}
         alt="Código QR para descargar la app SportMatch"
