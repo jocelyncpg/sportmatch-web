@@ -8,12 +8,14 @@ export type Tema = "light" | "dark";
 const KEY = "sportmatch_web_tema";
 const oyentes = new Set<() => void>();
 
+// Por defecto el panel arranca en claro, como la portada. Si la persona elige
+// "Oscuro" o "Sistema" con el selector, esa elección queda guardada.
 function leerPreferencia(): Preferencia {
   try {
     const v = localStorage.getItem(KEY);
-    return v === "light" || v === "dark" ? v : "system";
+    return v === "light" || v === "dark" || v === "system" ? v : "light";
   } catch {
-    return "system";
+    return "light";
   }
 }
 
@@ -49,17 +51,16 @@ const ThemeCtx = createContext<Ctx | null>(null);
 
 // Se guarda la preferencia y se resuelve el tema real (claro u oscuro) leyendo el navegador.
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const preferencia = useSyncExternalStore<Preferencia>(suscribir, leerPreferencia, () => "system");
+  const preferencia = useSyncExternalStore<Preferencia>(suscribir, leerPreferencia, () => "light");
   const tema = useSyncExternalStore<Tema>(
     suscribir,
     () => resolver(leerPreferencia()),
-    () => "dark"
+    () => "light"
   );
 
   const setPreferencia = useCallback((p: Preferencia) => {
     try {
-      if (p === "system") localStorage.removeItem(KEY);
-      else localStorage.setItem(KEY, p);
+      localStorage.setItem(KEY, p);
     } catch {
       /* sin almacenamiento disponible */
     }
@@ -77,4 +78,4 @@ export function useTheme(): Ctx {
 }
 
 // Script que corre antes de pintar para evitar el parpadeo de tema al recargar.
-export const SCRIPT_TEMA = `(function(){try{var p=localStorage.getItem("${KEY}");var t=(p==="light"||p==="dark")?p:(window.matchMedia("(prefers-color-scheme: light)").matches?"light":"dark");document.documentElement.dataset.theme=t;}catch(e){}})();`;
+export const SCRIPT_TEMA = `(function(){try{var p=localStorage.getItem("${KEY}");var t=p==="dark"?"dark":(p==="system"?(window.matchMedia("(prefers-color-scheme: light)").matches?"light":"dark"):"light");document.documentElement.dataset.theme=t;}catch(e){}})();`;

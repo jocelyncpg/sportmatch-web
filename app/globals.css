@@ -1,8 +1,8 @@
 @import "tailwindcss";
 @import "leaflet/dist/leaflet.css";
 
-/* Mismos colores que theme/ThemeContext de la app móvil.
-   Oscuro por defecto; el atributo data-theme lo pone ThemeProvider (claro / oscuro / sistema). */
+/* Colores del panel. Oscuro y claro comparten la misma marca morada de la app móvil.
+   El atributo data-theme lo pone ThemeProvider (claro / oscuro / sistema); por defecto, claro. */
 :root {
   color-scheme: dark;
   --bg: #0b0f19;
@@ -22,23 +22,25 @@
   --overlay: rgba(0, 0, 0, 0.6);
 }
 
-:root[data-theme="light"] {
+/* Claro: mismo estilo de la portada (blanco, bordes finos, texto azul oscuro). */
+:root[data-theme="light"],
+.forzar-claro {
   color-scheme: light;
-  --bg: #f5f6fa;
+  --bg: #ffffff;
   --card: #ffffff;
-  --border: #e2e5ec;
-  --text: #111827;
-  --muted: #6b7280;
+  --border: #e2e8f0;
+  --text: #0f172a;
+  --muted: #64748b;
   --primary: #7c3aed;
   --accent: #7c3aed;
   --input-bg: #ffffff;
-  --chip: #efeafe;
-  --subtle: #eef0f5;
+  --chip: #f3edff;
+  --subtle: #f1f5f9;
   --danger: #dc2626;
   --danger-bg: #fee2e2;
   --success: #16a34a;
   --success-bg: #dcfce7;
-  --overlay: rgba(0, 0, 0, 0.4);
+  --overlay: rgba(15, 23, 42, 0.45);
 }
 
 @theme inline {

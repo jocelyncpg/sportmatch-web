@@ -7,11 +7,11 @@ import type { EstadoReporte } from "@/lib/moderacion.mock";
 import type { EstadoPostulante } from "@/lib/store.mock";
 
 export const inputClass =
-  "w-full rounded-[13px] border border-border bg-input px-3.5 py-2.5 text-sm outline-none focus:border-accent";
+  "w-full rounded-xl border border-border bg-input px-4 py-3 text-sm outline-none focus:border-accent";
 export const btnPrimary =
-  "rounded-[13px] bg-primary px-5 py-2.5 text-sm font-bold text-white disabled:opacity-60";
+  "rounded-full bg-primary px-6 py-3 text-sm font-bold text-white transition hover:brightness-110 disabled:opacity-60";
 export const btnGhost =
-  "rounded-[13px] border border-border bg-card px-4 py-2 text-sm font-semibold hover:border-accent";
+  "rounded-full border border-border bg-card px-5 py-2.5 text-sm font-semibold transition-colors hover:border-accent";
 
 export function PageHeader({
   titulo,
@@ -23,10 +23,12 @@ export function PageHeader({
   accion?: React.ReactNode;
 }) {
   return (
-    <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
+    <div className="mb-8 flex flex-wrap items-end justify-between gap-3">
       <div>
-        <h1 className="text-xl font-bold tracking-tight">{titulo}</h1>
-        {subtitulo ? <p className="mt-0.5 text-sm text-muted">{subtitulo}</p> : null}
+        <h1 className="text-4xl font-extrabold uppercase leading-none tracking-[0.005em] [font-family:var(--font-titulo)] sm:text-5xl">
+          {titulo}
+        </h1>
+        {subtitulo ? <p className="mt-2 text-base text-muted">{subtitulo}</p> : null}
       </div>
       {accion}
     </div>
@@ -192,7 +194,7 @@ export function StatStrip({ items }: { items: { valor: number | string; etiqueta
       {items.map((i) => (
         <div key={i.etiqueta} className="px-5 py-4">
           <p className="text-xs font-semibold text-muted">{i.etiqueta}</p>
-          <p className="mt-1 text-2xl font-bold tracking-tight">{i.valor}</p>
+          <p className="mt-1 text-4xl font-extrabold leading-tight [font-family:var(--font-titulo)]">{i.valor}</p>
           {i.nota ? <p className="mt-0.5 text-xs text-muted">{i.nota}</p> : null}
         </div>
       ))}
