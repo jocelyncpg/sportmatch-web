@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { queryString, validarTexto } from "../lib/api/validaciones.mjs";
-import { mapAviso, mapClub, mapConvocatoria, mapPostulante } from "../lib/datos-mapeo.mjs";
+import { instagramAGuardar, instagramAMostrar, mapAviso, mapClub, mapConvocatoria, mapPostulante, opcional, webAGuardar } from "../lib/datos-mapeo.mjs";
 
 test("validación de campos de servicios respeta mínimos y máximos", () => {
   assert.equal(validarTexto("  Selección  ", "Nombre", 2, 20), "Selección");
@@ -39,4 +39,16 @@ test("mapea avisos del backend y conserva destino nulo cuando no está disponibl
   assert.deepEqual(mapAviso({ id: "av-1", titulo: "Aviso", contenido: "Texto", fecha_creacion: "2026-11-01T10:00:00Z" }, "mi-club"), {
     id: "av-1", clubId: "mi-club", convocatoriaId: null, titulo: "Aviso", mensaje: "Texto", fecha: "2026-11-01T10:00:00Z",
   });
+});
+
+test("perfil del club: formatos que acepta Ms-club", () => {
+  assert.equal(instagramAGuardar("@clubdemo"), "https://instagram.com/clubdemo");
+  assert.equal(instagramAGuardar("instagram.com/clubdemo"), "https://instagram.com/clubdemo");
+  assert.equal(instagramAGuardar("https://www.instagram.com/clubdemo"), "https://www.instagram.com/clubdemo");
+  assert.equal(instagramAGuardar("  "), null);
+  assert.equal(instagramAMostrar("https://instagram.com/clubdemo"), "@clubdemo");
+  assert.equal(webAGuardar("club.cl"), "https://club.cl");
+  assert.equal(webAGuardar("http://club.cl"), "http://club.cl");
+  assert.equal(webAGuardar(""), null);
+  assert.equal(opcional(" "), null);
 });
