@@ -52,7 +52,7 @@ export default function InicioClub() {
         ]);
         const paginasPostulantes = await Promise.all(
           paginaConvocatorias.items.map((convocatoria) =>
-            listarPostulantes(convocatoria.id, { page_size: 100 })
+            listarPostulantes(convocatoria.id, { page_size: 1 })
           )
         );
         if (!vigente) return;
