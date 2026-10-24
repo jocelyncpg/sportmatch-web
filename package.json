@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "test": "node --test scripts/*.mjs"
   },
   "dependencies": {
     "leaflet": "^1.9.4",

@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { getSesion, type Sesion } from "@/lib/auth.mock";
+import { getSesion, type Sesion } from "@/lib/sesion";
 
 // Protege las páginas del panel: sin sesión vuelve a /login.
 export default function AuthGuard({
@@ -14,13 +14,13 @@ export default function AuthGuard({
   const [sesion, setSesion] = useState<Sesion | null>(null);
 
   useEffect(() => {
-    const s = getSesion();
-    if (!s) {
-      router.replace("/login");
-      return;
-    }
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setSesion(s);
+    let activo = true;
+    void getSesion().then((s) => {
+      if (!activo) return;
+      if (!s) router.replace("/login");
+      else setSesion(s);
+    });
+    return () => { activo = false; };
   }, [router]);
 
   if (!sesion) {

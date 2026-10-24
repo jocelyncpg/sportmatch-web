@@ -2,6 +2,12 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 
 ## Getting Started
 
+La capa web usa `GATEWAY_URL` (por defecto `http://localhost:8000`) para conectar
+con el gateway. En producción define también `SESSION_SECRET` con una clave
+aleatoria fuerte; ambas son variables solo del servidor. Si la web corre detrás de
+un proxy confiable, `TRUST_PROXY=1` hace que el límite de intentos de login use la IP
+de `X-Forwarded-For`; sin eso cuenta solo por correo. Consulta `.env.example`.
+
 First, run the development server:
 
 ```bash

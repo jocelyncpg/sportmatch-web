@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useContext } from "react";
-import type { Rol, Sesion } from "@/lib/auth.mock";
+import type { Rol, Sesion } from "@/lib/sesion";
 
 export const SesionCtx = createContext<Sesion | null>(null);
 
