@@ -8,8 +8,18 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
+<<<<<<< Updated upstream
     <html lang="es">
       <body className="min-h-screen antialiased">{children}</body>
+=======
+    <html lang="es" data-theme="light" suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: SCRIPT_TEMA }} />
+      </head>
+      <body className="min-h-screen antialiased">
+        <ThemeProvider>{children}</ThemeProvider>
+      </body>
+>>>>>>> Stashed changes
     </html>
   );
 }

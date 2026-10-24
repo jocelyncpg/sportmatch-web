@@ -2,11 +2,19 @@ import Image from "next/image";
 import type { EstadoPostulante } from "@/lib/store.mock";
 
 export const inputClass =
+<<<<<<< Updated upstream
   "w-full rounded-[13px] border border-border bg-input px-3.5 py-3 text-sm outline-none focus:border-accent";
 export const btnPrimary =
   "rounded-[13px] bg-primary px-5 py-3 text-sm font-bold text-white disabled:opacity-60";
 export const btnGhost =
   "rounded-[13px] border border-border bg-card px-4 py-2.5 text-sm font-semibold hover:border-accent";
+=======
+  "w-full rounded-xl border border-border bg-input px-4 py-3 text-sm outline-none focus:border-accent";
+export const btnPrimary =
+  "rounded-full bg-primary px-6 py-3 text-sm font-bold text-white transition hover:brightness-110 disabled:opacity-60";
+export const btnGhost =
+  "rounded-full border border-border bg-card px-5 py-2.5 text-sm font-semibold transition-colors hover:border-accent";
+>>>>>>> Stashed changes
 
 export function PageHeader({
   titulo,
@@ -18,10 +26,17 @@ export function PageHeader({
   accion?: React.ReactNode;
 }) {
   return (
-    <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
+    <div className="mb-8 flex flex-wrap items-end justify-between gap-3">
       <div>
+<<<<<<< Updated upstream
         <h1 className="text-2xl font-extrabold">{titulo}</h1>
         {subtitulo ? <p className="mt-1 text-sm text-muted">{subtitulo}</p> : null}
+=======
+        <h1 className="text-4xl font-extrabold uppercase leading-none tracking-[0.005em] [font-family:var(--font-titulo)] sm:text-5xl">
+          {titulo}
+        </h1>
+        {subtitulo ? <p className="mt-2 text-base text-muted">{subtitulo}</p> : null}
+>>>>>>> Stashed changes
       </div>
       {accion}
     </div>
@@ -110,4 +125,60 @@ export const fechaCorta = (aaaammdd: string) =>
     day: "numeric",
     month: "short",
     year: "numeric",
+<<<<<<< Updated upstream
   });
+=======
+  });
+
+/** Fecha y hora de un instante ISO, para reportes y auditoría. */
+export const fechaHora = (iso: string) =>
+  new Date(iso).toLocaleString("es-CL", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+
+// Fila de cifras clave: una sola tarjeta con divisores, sin íconos decorativos.
+export function StatStrip({ items }: { items: { valor: number | string; etiqueta: string; nota?: string }[] }) {
+  return (
+    <Card flush className="grid divide-y divide-border sm:grid-flow-col sm:auto-cols-fr sm:divide-x sm:divide-y-0">
+      {items.map((i) => (
+        <div key={i.etiqueta} className="px-5 py-4">
+          <p className="text-xs font-semibold text-muted">{i.etiqueta}</p>
+          <p className="mt-1 text-4xl font-extrabold leading-tight [font-family:var(--font-titulo)]">{i.valor}</p>
+          {i.nota ? <p className="mt-0.5 text-xs text-muted">{i.nota}</p> : null}
+        </div>
+      ))}
+    </Card>
+  );
+}
+
+export function ProgressBar({ valor, max }: { valor: number; max: number }) {
+  const pct = max > 0 ? Math.min(100, Math.round((valor / max) * 100)) : 0;
+  return (
+    <div className="h-1.5 w-full overflow-hidden rounded-full bg-subtle">
+      <div className="h-full rounded-full bg-primary" style={{ width: `${pct}%` }} />
+    </div>
+  );
+}
+
+export function EstadoVacio({
+  icono: Icono,
+  titulo,
+  texto,
+}: {
+  icono: LucideIcon;
+  titulo: string;
+  texto: string;
+}) {
+  return (
+    <div className="flex flex-col items-center rounded-2xl border border-dashed border-border px-6 py-12 text-center">
+      <Icono size={22} className="mb-3 text-muted" />
+      <p className="font-semibold">{titulo}</p>
+      <p className="mt-1 max-w-sm text-sm text-muted">{texto}</p>
+    </div>
+  );
+}
+>>>>>>> Stashed changes

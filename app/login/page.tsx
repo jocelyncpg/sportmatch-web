@@ -1,13 +1,20 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+<<<<<<< Updated upstream
 import Image from "next/image";
 import { useState } from "react";
 import BrandLogo from "@/components/BrandLogo";
 import { login } from "@/lib/auth.mock";
+=======
+import { useEffect } from "react";
+>>>>>>> Stashed changes
 
+// El inicio de sesión ahora es un modal sobre la portada. Esta ruta se mantiene
+// para los enlaces antiguos y para las páginas protegidas que redirigen aquí.
 export default function LoginPage() {
   const router = useRouter();
+<<<<<<< Updated upstream
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -93,4 +100,10 @@ export default function LoginPage() {
       </div>
     </main>
   );
+=======
+  useEffect(() => {
+    router.replace("/?login=1");
+  }, [router]);
+  return null;
+>>>>>>> Stashed changes
 }

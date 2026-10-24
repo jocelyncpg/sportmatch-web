@@ -1,7 +1,12 @@
 @import "tailwindcss";
 
+<<<<<<< Updated upstream
 /* Mismos colores que theme/ThemeContext de la app móvil.
    Igual que la app: oscuro por defecto, claro solo si el sistema está en claro. */
+=======
+/* Colores del panel. Oscuro y claro comparten la misma marca morada de la app móvil.
+   El atributo data-theme lo pone ThemeProvider (claro / oscuro / sistema); por defecto, claro. */
+>>>>>>> Stashed changes
 :root {
   --bg: #0b0f19;
   --card: #161c2a;
@@ -20,6 +25,7 @@
   --overlay: rgba(0, 0, 0, 0.6);
 }
 
+<<<<<<< Updated upstream
 @media (prefers-color-scheme: light) {
   :root {
     --bg: #f5f6fa;
@@ -38,6 +44,27 @@
     --success-bg: #dcfce7;
     --overlay: rgba(0, 0, 0, 0.4);
   }
+=======
+/* Claro: mismo estilo de la portada (blanco, bordes finos, texto azul oscuro). */
+:root[data-theme="light"],
+.forzar-claro {
+  color-scheme: light;
+  --bg: #ffffff;
+  --card: #ffffff;
+  --border: #e2e8f0;
+  --text: #0f172a;
+  --muted: #64748b;
+  --primary: #7c3aed;
+  --accent: #7c3aed;
+  --input-bg: #ffffff;
+  --chip: #f3edff;
+  --subtle: #f1f5f9;
+  --danger: #dc2626;
+  --danger-bg: #fee2e2;
+  --success: #16a34a;
+  --success-bg: #dcfce7;
+  --overlay: rgba(15, 23, 42, 0.45);
+>>>>>>> Stashed changes
 }
 
 @theme inline {
