@@ -20,8 +20,15 @@ import { CENTRO_SANTIAGO, COMUNAS } from "@/lib/comunas";
 import { porComuna, porConvocatoria, porDia, porEstado, porNivel } from "@/lib/stats";
 import { estaActiva, useModeracion } from "@/lib/moderacion.mock";
 import { CLUB_DEMO_ID, useDatos } from "@/lib/store.mock";
+import InicioClub from "@/components/club/InicioClub";
+import type { Candidato } from "@/lib/api/postulantes";
 
 export default function InicioPage() {
+  const sesion = useSesion();
+  return sesion.rol === "admin" ? <AdminInicio /> : <InicioClub />;
+}
+
+function AdminInicio() {
   const sesion = useSesion();
   const datos = useDatos();
   const { mensaje, abierto, setAbierto, cambiar } = useGestionPostulantes();
@@ -208,7 +215,7 @@ export default function InicioPage() {
 
       {abiertoP ? (
         <PerfilPostulante
-          p={abiertoP}
+          p={abiertoP as unknown as Candidato}
           convocatoria={mias.find((c) => c.id === abiertoP.convocatoriaId)?.titulo}
           onCerrar={() => setAbierto(null)}
           onCambiar={(n) => cambiar(abiertoP.id, n)}

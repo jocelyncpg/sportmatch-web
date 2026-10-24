@@ -1,0 +1,22 @@
+export function mapearRol(role: unknown): "club" | "admin" | null;
+export function rutasPermitidas(path: string): boolean;
+export function rutaGateway(segments: string[]): string | null;
+export function mensajeBackend(status: number, payload: unknown, fallback: string): string;
+export function mensajeLogin(status: number, payload: unknown): string;
+export function errorBff(payload: unknown, fallback: string): string;
+export function validarLoginBody(value: unknown): value is { email: string; password: string };
+export function validarCSRF(request: Request): boolean;
+export function claveIntentos(email: string, ip: string | null, trustProxy: boolean): string;
+export function limitarPorIP(request: Request, email: string, trustProxy: boolean): string;
+export function limitado(key: string, ahora?: number): boolean;
+export function falloLogin(key: string, ahora?: number): void;
+export function limpiarIntentos(key: string): void;
+export function cantidadIntentos(): number;
+export type OpcionesCookie = {
+  httpOnly: true;
+  sameSite: "lax";
+  secure: boolean;
+  path: "/";
+  maxAge: number;
+};
+export function opcionesCookie(secure: boolean, maxAge: number): OpcionesCookie;
