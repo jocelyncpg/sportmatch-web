@@ -102,6 +102,8 @@ async function cargarDesdeApi() {
 }
 
 async function recargar() {
+  // Sin sesión no hay nada que pedir; así no se llama al backend desde el login ni tras cerrar sesión.
+  if (!getSesion()) return;
   try { await cargarDesdeApi(); } catch (error) { registrarError(error); }
 }
 
