@@ -13,7 +13,7 @@ export type EstadoPostulante = "Pendiente" | "Preseleccionado" | "En espera" | "
 export const ESTADOS: EstadoPostulante[] = ["Pendiente", "Preseleccionado", "En espera", "Aceptado", "Rechazado"];
 // Catálogo de Ms-club (GET /clubs/deportes): un deporte fuera de él no se puede guardar.
 export const DEPORTES = ["Atletismo", "Básquetbol", "Ciclismo", "Fútbol", "Natación", "Running", "Tenis", "Trekking", "Vóleibol", "Yoga"];
-export interface Club { id: string; nombre: string; descripcion: string; zona: string; deportes: string[]; email: string; telefono: string; instagram: string; web: string; logoUrl: string }
+export interface Club { id: string; nombre: string; descripcion: string; zona: string; deportes: string[]; email: string; telefono: string; instagram: string; web: string; logoUrl: string; portadaUrl: string; direccion: string; latitud: number | null; longitud: number | null }
 export interface Convocatoria { id: string; clubId: string; titulo: string; deporte: string; categoria: string; fecha: string; requisitos: string; cupos: number; estado: "abierta" | "cerrada"; chatPostulantes: boolean }
 export type Nivel = "Principiante" | "Intermedio" | "Avanzado";
 export const NIVELES: Nivel[] = ["Principiante", "Intermedio", "Avanzado"];
@@ -84,7 +84,11 @@ async function cargarDesdeApi() {
   clubRealId = propio.id;
   postulacionesReales = new Map();
   const clubesAdaptados = clubes.filter((club) => club.id !== propio!.id);
-  clubesAdaptados.unshift(mapClub(propio, CLUB_DEMO_ID));
+  // Las imágenes elegidas en esta sesión (aún sin subida al servidor) no se pierden al recargar.
+  const previo = estado.clubes.find((club) => club.id === CLUB_DEMO_ID);
+  const local = (valor?: string) => (valor && valor.startsWith("data:") ? valor : "");
+  const adaptado = mapClub(propio, CLUB_DEMO_ID);
+  clubesAdaptados.unshift({ ...adaptado, logoUrl: adaptado.logoUrl || local(previo?.logoUrl), portadaUrl: adaptado.portadaUrl || local(previo?.portadaUrl) });
   // Sin estado, la API solo devuelve las ABIERTA: cerradas y finalizadas (y sus postulantes) quedarían fuera.
   const convs = (await Promise.all((["ABIERTA", "CERRADA", "FINALIZADA"] as const).map((estado) =>
     todasLasPaginas((page) => listarConvocatorias({ club_id: propio!.id, estado, page, page_size: 50 }))))).flat();
@@ -144,6 +148,15 @@ export function actualizarClub(id: string, cambios: Partial<Club>): void {
       if (cambios.instagram !== undefined) datos.redes_sociales = { instagram: instagramAGuardar(cambios.instagram) };
       if (cambios.web !== undefined) datos.sitio_web = webAGuardar(cambios.web);
       if (cambios.logoUrl !== undefined && (!cambios.logoUrl || /^https:\/\//.test(cambios.logoUrl))) datos.logo = cambios.logoUrl || null;
+      // Ms-club solo acepta imágenes con dirección HTTPS: una foto recién elegida del equipo queda como vista previa.
+      if (cambios.portadaUrl !== undefined && cambios.portadaUrl !== anterior.portadaUrl && (!cambios.portadaUrl || /^https:\/\//.test(cambios.portadaUrl))) datos.portada = cambios.portadaUrl || null;
+      // Ubicación: solo se envía lo que cambió. La latitud y la longitud viajan siempre juntas.
+      if (cambios.zona !== undefined && cambios.zona !== anterior.zona) datos.comuna = opcional(cambios.zona);
+      if (cambios.direccion !== undefined && cambios.direccion !== anterior.direccion) datos.direccion = opcional(cambios.direccion);
+      if ((cambios.latitud !== undefined && cambios.latitud !== anterior.latitud) || (cambios.longitud !== undefined && cambios.longitud !== anterior.longitud)) {
+        datos.latitud = cambios.latitud ?? null;
+        datos.longitud = cambios.longitud ?? null;
+      }
       const deportes = cambios.deportes;
       if (deportes) {
         const disponibles = await listarDeportes();

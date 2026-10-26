@@ -21,7 +21,8 @@ import { Suspense, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import AuthGuard from "@/components/AuthGuard";
 import BrandLogo from "@/components/BrandLogo";
-import { SesionCtx } from "@/components/SesionContext";
+import MenuUsuario from "@/components/MenuUsuario";
+import { SesionCtx, SoloRol } from "@/components/SesionContext";
 import ThemeToggle from "@/components/ThemeToggle";
 import { Avatar } from "@/components/ui";
 import { logout, type Rol } from "@/lib/auth";
@@ -34,6 +35,8 @@ interface Item {
   corto?: string;
   icono: LucideIcon;
   roles: Rol[];
+  /** true = no va en la barra principal: se abre desde el botón con el nombre (menú del usuario) */
+  enMenuUsuario?: boolean;
 }
 
 const GRUPOS: { titulo: string; items: Item[] }[] = [
@@ -41,16 +44,16 @@ const GRUPOS: { titulo: string; items: Item[] }[] = [
     titulo: "General",
     items: [
       { href: "/inicio", label: "Inicio", icono: LayoutDashboard, roles: ["club", "admin"] },
-      { href: "/clubes", label: "Directorio de clubes", corto: "Clubes", icono: Building2, roles: ["club", "admin"] },
+      { href: "/clubes", label: "Directorio de clubes", corto: "Clubes", icono: Building2, roles: ["admin"] },
     ],
   },
   {
     titulo: "Gestión del club",
     items: [
-      { href: "/perfil", label: "Mi club", icono: ShieldCheck, roles: ["club"] },
+      { href: "/perfil", label: "Mi club", icono: ShieldCheck, roles: ["club"], enMenuUsuario: true },
       { href: "/convocatorias", label: "Convocatorias", icono: Megaphone, roles: ["club"] },
       { href: "/postulantes", label: "Postulantes", icono: Users, roles: ["club"] },
-      { href: "/avisos", label: "Avisos", icono: Bell, roles: ["club"] },
+      { href: "/avisos", label: "Avisos", icono: Bell, roles: ["club"], enMenuUsuario: true },
       { href: "/suscripcion", label: "Mi suscripción", icono: BadgePercent, roles: ["club"] },
     ],
   },
@@ -80,7 +83,12 @@ function Panel({ children }: { children: React.ReactNode }) {
           ...g,
           items: g.items.filter((i) => i.roles.includes(sesion.rol)),
         })).filter((g) => g.items.length > 0);
-        const todos = grupos.flatMap((g) => g.items);
+        const permitidos = grupos.flatMap((g) => g.items);
+        // Barra principal: sin los accesos que van en el menú del usuario.
+        const todos = permitidos.filter((i) => !i.enMenuUsuario);
+        const itemsUsuario = permitidos.filter((i) => i.enMenuUsuario);
+        // Si se entra por la dirección a una sección que su rol no tiene, se muestra "Sin permiso".
+        const seccion = GRUPOS.flatMap((g) => g.items).find((i) => pathname.startsWith(i.href));
 
         const salir = () => {
           logout();
@@ -120,15 +128,24 @@ function Panel({ children }: { children: React.ReactNode }) {
 
                   <div className="ml-auto hidden items-center gap-3 xl:flex">
                     <ThemeToggle compacto />
-                    <div className="flex items-center gap-2.5">
-                      <Avatar nombre={sesion.nombre} size={40} />
-                      <div className="hidden min-w-0 2xl:block">
-                        <p className="max-w-[140px] truncate text-sm font-bold leading-tight">{sesion.nombre}</p>
-                        <p className="text-xs text-muted">
-                          {sesion.rol === "club" ? "Cuenta de club" : "Administración"}
-                        </p>
+                    {itemsUsuario.length > 0 ? (
+                      <MenuUsuario
+                        nombre={sesion.nombre}
+                        subtitulo={sesion.rol === "club" ? "Cuenta de club" : "Administración"}
+                        items={itemsUsuario}
+                        pathname={pathname}
+                      />
+                    ) : (
+                      <div className="flex items-center gap-2.5">
+                        <Avatar nombre={sesion.nombre} size={40} />
+                        <div className="hidden min-w-0 2xl:block">
+                          <p className="max-w-[140px] truncate text-sm font-bold leading-tight">{sesion.nombre}</p>
+                          <p className="text-xs text-muted">
+                            {sesion.rol === "club" ? "Cuenta de club" : "Administración"}
+                          </p>
+                        </div>
                       </div>
-                    </div>
+                    )}
                     <button
                       type="button"
                       onClick={salir}
@@ -195,7 +212,9 @@ function Panel({ children }: { children: React.ReactNode }) {
                 ) : null}
               </header>
 
-              <main className="mx-auto w-full max-w-7xl px-5 py-10 sm:px-8 md:py-12">{children}</main>
+              <main className="mx-auto w-full max-w-7xl px-5 py-10 sm:px-8 md:py-12">
+                <SoloRol roles={seccion?.roles ?? ["club", "admin"]}>{children}</SoloRol>
+              </main>
             </div>
           </SesionCtx.Provider>
         );
