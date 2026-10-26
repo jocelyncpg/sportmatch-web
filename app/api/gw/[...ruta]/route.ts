@@ -15,6 +15,9 @@ async function proxy(request: Request, context: Contexto) {
   if (!["GET", "POST", "PUT", "PATCH", "DELETE"].includes(method)) {
     return NextResponse.json({ error: "Método no permitido." }, { status: 405 });
   }
+  if (path === "users/reports" && method !== "POST") {
+    return NextResponse.json({ error: "Método no permitido." }, { status: 405 });
+  }
   if (method !== "GET" && !origenSeguro(request)) {
     return NextResponse.json({ error: "Solicitud no permitida." }, { status: 403 });
   }
@@ -54,7 +57,7 @@ async function proxy(request: Request, context: Contexto) {
       method,
       headers,
       body,
-      signal: AbortSignal.timeout(15_000),
+      signal: AbortSignal.timeout(path.startsWith("payments/webpay/") ? 40_000 : 15_000),
       cache: "no-store",
       redirect: "manual",
     });

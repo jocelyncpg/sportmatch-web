@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, MapPin, Star, X } from "lucide-react";
+import { Check, Clock, MapPin, Star, X } from "lucide-react";
 import Image from "next/image";
 import { useState } from "react";
 import { BadgeEstado, Card } from "@/components/ui";
@@ -35,6 +35,14 @@ export const Valoracion = ({ p }: { p: Postulante }) => (
     <Star size={13} className="fill-current text-accent" /> {p.rating.toFixed(1)} · {p.resenas} reseñas
   </span>
 );
+
+// Decisiones del club sobre una postulación; no se ofrece el estado que ya tiene.
+export const DECISIONES: { estado: EstadoPostulante; etiqueta: string; icono: typeof Check; peligro?: boolean }[] = [
+  { estado: "Preseleccionado", etiqueta: "Preseleccionar", icono: Star },
+  { estado: "En espera", etiqueta: "En espera", icono: Clock },
+  { estado: "Aceptado", etiqueta: "Aprobar", icono: Check },
+  { estado: "Rechazado", etiqueta: "Rechazar", icono: X, peligro: true },
+];
 
 export default function PostulanteCard({
   p,
@@ -78,26 +86,21 @@ export default function PostulanteCard({
             Ver perfil
           </button>
           <div className="flex gap-1.5">
-            {p.estado !== "Preseleccionado" && p.estado !== "Aceptado" ? (
-              <button title="Preseleccionar" aria-label="Preseleccionar" className={accion} onClick={() => onCambiar("Preseleccionado")}>
-                <Star size={15} />
-              </button>
-            ) : null}
-            {p.estado !== "Aceptado" ? (
-              <button title="Aceptar" aria-label="Aceptar" className={accion} onClick={() => onCambiar("Aceptado")}>
-                <Check size={15} />
-              </button>
-            ) : null}
-            {p.estado !== "Rechazado" ? (
-              <button
-                title="Rechazar"
-                aria-label="Rechazar"
-                className={`${accion} hover:border-danger hover:text-danger`}
-                onClick={() => onCambiar("Rechazado")}
-              >
-                <X size={15} />
-              </button>
-            ) : null}
+            {DECISIONES.filter((d) => d.estado !== p.estado).map((d) => {
+              const Icono = d.icono;
+              return (
+                <button
+                  key={d.estado}
+                  type="button"
+                  title={d.etiqueta}
+                  aria-label={`${d.etiqueta} a ${p.nombre}`}
+                  className={`${accion} ${d.peligro ? "hover:border-danger hover:text-danger" : ""}`}
+                  onClick={() => onCambiar(d.estado)}
+                >
+                  <Icono size={15} />
+                </button>
+              );
+            })}
           </div>
         </div>
       </div>

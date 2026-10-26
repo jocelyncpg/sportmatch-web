@@ -23,7 +23,10 @@ test("lista blanca del gateway incluye solo rutas pactadas", () => {
   assert.equal(rutasPermitidas("clubs/announcements"), true);
   assert.equal(rutasPermitidas("payments/plans"), true);
   assert.equal(rutasPermitidas("payments/subscription/me"), true);
-  for (const route of ["users/me", "payments/webpay/initiate", "clubs/../users", "clubs//me", "clubs\\me"]) assert.equal(rutasPermitidas(route), false);
+  assert.equal(rutasPermitidas("users/reports"), true);
+  assert.equal(rutasPermitidas("payments/webpay/initiate"), true);
+  assert.equal(rutasPermitidas("payments/webpay/commit"), true);
+  for (const route of ["users/me", "users/reports/abc", "users/admin/reports", "users/reportsx", "payments/webpay/mock", "payments/webpay/commit/extra", "payments/plans/extra", "clubs/../users", "clubs//me", "clubs\\me"]) assert.equal(rutasPermitidas(route), false);
 });
 test("mapea roles permitidos y bloquea deportistas", () => {
   assert.equal(mapearRol("club_admin"), "club"); assert.equal(mapearRol("admin"), "admin"); assert.equal(mapearRol("player"), null);
@@ -42,6 +45,8 @@ test("CSRF requiere origen exacto o marcador de la web", () => {
   assert.equal(validarCSRF(req({ origin: "https://evil.test" })), false);
   assert.equal(validarCSRF(req({ "x-requested-with": "sportmatch-web" })), true);
   assert.equal(validarCSRF(req({})), false);
+  assert.equal(validarCSRF(req({ origin: "null" })), false);
+  assert.equal(validarCSRF(req({ origin: "%%%" })), false);
 });
 test("aplica cinco intentos fallidos por ventana de 15 minutos", () => {
   const key = `test-${Date.now()}`;

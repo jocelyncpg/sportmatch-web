@@ -9,15 +9,15 @@ import { listarAvisos, publicarAviso } from "./api/avisos";
 import { ApiError } from "./api/cliente";
 import { instagramAGuardar, mapAviso, mapClub, mapConvocatoria, mapPostulante, opcional, webAGuardar } from "./datos-mapeo.mjs";
 
-export type EstadoPostulante = "Pendiente" | "Preseleccionado" | "Aceptado" | "Rechazado";
-export const ESTADOS: EstadoPostulante[] = ["Pendiente", "Preseleccionado", "Aceptado", "Rechazado"];
+export type EstadoPostulante = "Pendiente" | "Preseleccionado" | "En espera" | "Aceptado" | "Rechazado";
+export const ESTADOS: EstadoPostulante[] = ["Pendiente", "Preseleccionado", "En espera", "Aceptado", "Rechazado"];
 // Catálogo de Ms-club (GET /clubs/deportes): un deporte fuera de él no se puede guardar.
 export const DEPORTES = ["Atletismo", "Básquetbol", "Ciclismo", "Fútbol", "Natación", "Running", "Tenis", "Trekking", "Vóleibol", "Yoga"];
 export interface Club { id: string; nombre: string; descripcion: string; zona: string; deportes: string[]; email: string; telefono: string; instagram: string; web: string; logoUrl: string }
-export interface Convocatoria { id: string; clubId: string; titulo: string; deporte: string; categoria: string; fecha: string; requisitos: string; cupos: number; estado: "abierta" | "cerrada" }
+export interface Convocatoria { id: string; clubId: string; titulo: string; deporte: string; categoria: string; fecha: string; requisitos: string; cupos: number; estado: "abierta" | "cerrada"; chatPostulantes: boolean }
 export type Nivel = "Principiante" | "Intermedio" | "Avanzado";
 export const NIVELES: Nivel[] = ["Principiante", "Intermedio", "Avanzado"];
-export interface Postulante { id: string; convocatoriaId: string; nombre: string; edad: number; nivel: Nivel; comuna: string; estado: EstadoPostulante; fechaPostulacion: string; deportes: string[]; bio: string; disponibilidad: string; objetivo: string; rating: number; resenas: number; foto: string }
+export interface Postulante { id: string; usuarioId: string; convocatoriaId: string; nombre: string; edad: number; nivel: Nivel; comuna: string; estado: EstadoPostulante; fechaPostulacion: string; deportes: string[]; bio: string; disponibilidad: string; objetivo: string; rating: number; resenas: number; foto: string }
 export interface Aviso { id: string; clubId: string; convocatoriaId: string | null; titulo: string; mensaje: string; fecha: string }
 export interface Notificacion { id: string; texto: string; fecha: string }
 export interface Datos { clubes: Club[]; convocatorias: Convocatoria[]; postulantes: Postulante[]; avisos: Aviso[]; notificaciones: Notificacion[] }
@@ -85,7 +85,9 @@ async function cargarDesdeApi() {
   postulacionesReales = new Map();
   const clubesAdaptados = clubes.filter((club) => club.id !== propio!.id);
   clubesAdaptados.unshift(mapClub(propio, CLUB_DEMO_ID));
-  const convs = await todasLasPaginas((page) => listarConvocatorias({ club_id: propio!.id, page, page_size: 50 }));
+  // Sin estado, la API solo devuelve las ABIERTA: cerradas y finalizadas (y sus postulantes) quedarían fuera.
+  const convs = (await Promise.all((["ABIERTA", "CERRADA", "FINALIZADA"] as const).map((estado) =>
+    todasLasPaginas((page) => listarConvocatorias({ club_id: propio!.id, estado, page, page_size: 50 }))))).flat();
   convocatoriasReales = new Map(convs.map((convocatoria) => [convocatoria.id, convocatoria.id]));
   const convocatorias = convs.map((convocatoria) => mapConvocatoria(convocatoria, CLUB_DEMO_ID));
   const postulantes = (await Promise.all(convs.map(async (convocatoria) => {
@@ -189,6 +191,7 @@ export function crearConvocatoria(d: Omit<Convocatoria, "id" | "estado">): void 
         cupos: d.cupos,
         direccion: estado.clubes.find((club) => club.id === CLUB_DEMO_ID)?.zona || "Dirección del club",
         titulo: d.titulo,
+        chat_postulantes_habilitado: d.chatPostulantes,
       });
       reemplazar({ convocatorias: estado.convocatorias.map((item) => item.id === temporal.id ? mapConvocatoria(creada, CLUB_DEMO_ID) : item) });
       convocatoriasReales.set(temporal.id, creada.id);
@@ -213,7 +216,7 @@ export function cambiarEstadoPostulante(id: string, nuevo: EstadoPostulante): st
     notificaciones: [{ id: nuevoId("n"), texto, fecha: new Date().toISOString() }, ...estado.notificaciones],
   });
   const real = postulacionesReales.get(id) ?? id;
-  const estados = { Pendiente: "PENDIENTE", Preseleccionado: "PRESELECCIONADO", Aceptado: "ACEPTADO", Rechazado: "RECHAZADO" } as const;
+  const estados = { Pendiente: "PENDIENTE", Preseleccionado: "PRESELECCIONADO", "En espera": "EN_ESPERA", Aceptado: "ACEPTADO", Rechazado: "RECHAZADO" } as const;
   if (nuevo !== "Pendiente") void actualizarPostulante(real, estados[nuevo]).catch(async (error) => { registrarError(error); await recargar(); });
   else { registrarError(new Error("El backend no permite volver una postulación a pendiente.")); void recargar(); }
   return texto;

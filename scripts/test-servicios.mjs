@@ -28,11 +28,17 @@ test("mapea el perfil del club y los valores opcionales", () => {
 
 test("mapea convocatoria y postulante a las etiquetas del mock", () => {
   assert.deepEqual(mapConvocatoria({ id: "conv-1", titulo: "Prueba", deporte: { nombre: "Fútbol" }, categoria_edad: "Sub-18", fecha_prueba: "2026-12-01T12:00:00Z", requisitos: ["Ropa", "Cédula"], cupos: 8, estado: "FINALIZADA" }, "mi-club"), {
-    id: "conv-1", clubId: "mi-club", titulo: "Prueba", deporte: "Fútbol", categoria: "Sub-18", fecha: "2026-12-01", requisitos: "Ropa, Cédula", cupos: 8, estado: "cerrada",
+    id: "conv-1", clubId: "mi-club", titulo: "Prueba", deporte: "Fútbol", categoria: "Sub-18", fecha: "2026-12-01", requisitos: "Ropa, Cédula", cupos: 8, estado: "cerrada", chatPostulantes: false,
   });
-  assert.deepEqual(mapPostulante({ id: "app-1", estado: "PRESELECCIONADO", fecha_postulacion: "2026-11-01T10:00:00Z", mensaje: null, perfil_deportivo: { nombre: "Ana", apellido_inicial: "P", edad: null, foto_perfil: null, biografia: null, deportes: [{ deporte_codigo: "FUT", nivel: 4 }] } }, "conv-1"), {
-    id: "app-1", convocatoriaId: "conv-1", nombre: "Ana P.", edad: 0, nivel: "Avanzado", comuna: "", estado: "Preseleccionado", fechaPostulacion: "2026-11-01", deportes: ["FUT"], bio: "", disponibilidad: "", objetivo: "", rating: 0, resenas: 0, foto: "",
+  assert.equal(mapConvocatoria({ id: "conv-2", chat_postulantes_habilitado: true, estado: "ABIERTA" }, "mi-club").chatPostulantes, true);
+  assert.deepEqual(mapPostulante({ id: "app-1", usuario_id: "u-1", estado: "PRESELECCIONADO", fecha_postulacion: "2026-11-01T10:00:00Z", mensaje: null, perfil_deportivo: { nombre: "Ana", apellido_inicial: "P", edad: null, foto_perfil: null, biografia: null, deportes: [{ deporte_codigo: "FUT", nivel: 4 }] } }, "conv-1"), {
+    id: "app-1", usuarioId: "u-1", convocatoriaId: "conv-1", nombre: "Ana P.", edad: 0, nivel: "Avanzado", comuna: "", estado: "Preseleccionado", fechaPostulacion: "2026-11-01", deportes: ["FUT"], bio: "", disponibilidad: "", objetivo: "", rating: 0, resenas: 0, foto: "",
   });
+});
+
+test("mapea el estado EN_ESPERA del backend a 'En espera' y los desconocidos a Pendiente", () => {
+  assert.equal(mapPostulante({ id: "app-2", estado: "EN_ESPERA", perfil_deportivo: {} }, "conv-1").estado, "En espera");
+  assert.equal(mapPostulante({ id: "app-3", estado: "DESCONOCIDO", perfil_deportivo: {} }, "conv-1").estado, "Pendiente");
 });
 
 test("mapea avisos del backend y conserva destino nulo cuando no está disponible", () => {

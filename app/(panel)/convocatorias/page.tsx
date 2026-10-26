@@ -33,6 +33,8 @@ function Contenido() {
   const [f, setF] = useState(VACIO);
   const [error, setError] = useState("");
   const [publicada, setPublicada] = useState(false);
+  // El club decide si los postulantes pueden escribir en el chat de consultas de esta convocatoria.
+  const [chat, setChat] = useState(false);
 
   const mias = datos.convocatorias.filter((c) => c.clubId === CLUB_DEMO_ID);
   const hoy = new Date().toISOString().slice(0, 10);
@@ -66,8 +68,10 @@ function Contenido() {
       fecha: f.fecha,
       requisitos: f.requisitos.trim(),
       cupos,
+      chatPostulantes: chat,
     });
     setF(VACIO);
+    setChat(false);
     setPublicada(true);
   }
 
@@ -108,6 +112,18 @@ function Contenido() {
           <Campo label="Requisitos">
             <textarea className={`${inputClass} min-h-24`} value={f.requisitos} onChange={(e) => set("requisitos", e.target.value)} />
           </Campo>
+          <label className="flex items-center gap-3 text-sm">
+            <input
+              type="checkbox"
+              className="h-4 w-4 accent-[var(--primary)]"
+              checked={chat}
+              onChange={(e) => {
+                setChat(e.target.checked);
+                setPublicada(false);
+              }}
+            />
+            <span>Permitir que los postulantes escriban en el chat de consultas</span>
+          </label>
 
           {error ? <p className="text-sm text-danger">{error}</p> : null}
           <div className="flex items-center gap-4">
@@ -150,6 +166,9 @@ function Contenido() {
                   </div>
                 </div>
                 <p className="mt-2 text-sm">{c.requisitos}</p>
+                <p className="mt-1 text-xs text-muted">
+                  Chat de postulantes: {c.chatPostulantes ? "activado" : "desactivado (solo lectura)"}
+                </p>
                 <div className="mt-4">
                   <div className="mb-1.5 flex justify-between text-xs font-semibold text-muted">
                     <span>{total} postulantes</span>
