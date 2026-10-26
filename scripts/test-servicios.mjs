@@ -22,8 +22,20 @@ test("tipos compartidos de la API solo muestran campos contractuales", () => {
 
 test("mapea el perfil del club y los valores opcionales", () => {
   assert.deepEqual(mapClub({ id: "club-1", nombre: "Club", descripcion: null, ubicacion: { comuna: "Ñuñoa" }, email_contacto: "a@b.cl", redes_sociales: { instagram: "@club" }, sitio_web: "https://club.cl", logo: "logo.png", deportes: [{ nombre: "Fútbol" }] }, "mi-club"), {
-    id: "mi-club", nombre: "Club", descripcion: "", zona: "Ñuñoa", deportes: ["Fútbol"], email: "a@b.cl", telefono: "", instagram: "@club", web: "https://club.cl", logoUrl: "logo.png",
+    id: "mi-club", nombre: "Club", descripcion: "", zona: "Ñuñoa", deportes: ["Fútbol"], email: "a@b.cl", telefono: "", instagram: "@club", web: "https://club.cl", logoUrl: "logo.png", portadaUrl: "", direccion: "", latitud: null, longitud: null,
   });
+});
+
+test("mapea la ubicación y la portada del club", () => {
+  const club = mapClub({ id: "club-1", nombre: "Club", portada: "https://cdn.club.cl/portada.jpg", ubicacion: { direccion: "Av. Irarrázaval 123", comuna: "Ñuñoa", latitud: -33.4569, longitud: -70.5975 }, deportes: [] }, "mi-club");
+  assert.equal(club.portadaUrl, "https://cdn.club.cl/portada.jpg");
+  assert.equal(club.direccion, "Av. Irarrázaval 123");
+  assert.equal(club.latitud, -33.4569);
+  assert.equal(club.longitud, -70.5975);
+  // El resumen del directorio trae la dirección en el nivel superior y no trae coordenadas.
+  const resumen = mapClub({ id: "club-2", nombre: "Otro", direccion: "Calle 1", comuna: "Maipú", deportes: [] });
+  assert.equal(resumen.direccion, "Calle 1");
+  assert.equal(resumen.latitud, null);
 });
 
 test("mapea convocatoria y postulante a las etiquetas del mock", () => {
