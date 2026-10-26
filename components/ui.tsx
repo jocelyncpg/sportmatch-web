@@ -75,6 +75,7 @@ export function Chip({
 export const COLOR_ESTADO: Record<EstadoPostulante, string> = {
   Pendiente: "var(--muted)",
   Preseleccionado: "var(--accent)",
+  "En espera": "#f59e0b",
   Aceptado: "var(--success)",
   Rechazado: "var(--danger)",
 };

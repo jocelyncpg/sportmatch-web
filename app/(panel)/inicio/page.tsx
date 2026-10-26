@@ -208,8 +208,10 @@ export default function InicioPage() {
 
       {abiertoP ? (
         <PerfilPostulante
+          key={abiertoP.id}
           p={abiertoP}
           convocatoria={mias.find((c) => c.id === abiertoP.convocatoriaId)?.titulo}
+          chatHabilitado={mias.find((c) => c.id === abiertoP.convocatoriaId)?.chatPostulantes ?? false}
           onCerrar={() => setAbierto(null)}
           onCambiar={(n) => cambiar(abiertoP.id, n)}
         />

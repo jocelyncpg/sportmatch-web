@@ -83,8 +83,10 @@ function Contenido() {
 
       {abiertoP ? (
         <PerfilPostulante
+          key={abiertoP.id}
           p={abiertoP}
           convocatoria={titulo(abiertoP.convocatoriaId)}
+          chatHabilitado={mias.find((c) => c.id === abiertoP.convocatoriaId)?.chatPostulantes ?? false}
           onCerrar={() => setAbierto(null)}
           onCambiar={(n) => cambiar(abiertoP.id, n)}
         />

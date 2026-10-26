@@ -21,6 +21,8 @@ export interface Convocatoria {
   comuna: string | null;
   estado: EstadoConvocatoria;
   fecha_creacion: string | null;
+  /** Si los postulantes pueden escribir en el chat de consultas (campo pendiente de contrato en Ms-club). */
+  chat_postulantes_habilitado?: boolean;
 }
 
 export interface ConvocatoriaPage {
@@ -42,6 +44,7 @@ export interface ConvocatoriaCreate {
   comuna?: string | null;
   titulo?: string | null;
   descripcion?: string | null;
+  chat_postulantes_habilitado?: boolean;
 }
 
 export interface ConvocatoriaFilters {

@@ -1,8 +1,10 @@
 "use client";
 
-import { CalendarClock, MapPin, Target, X } from "lucide-react";
-import { useEffect } from "react";
-import { Foto, Valoracion } from "@/components/PostulanteCard";
+import { CalendarClock, Flag, MapPin, Target, X } from "lucide-react";
+import { useEffect, useState } from "react";
+import ChatPostulacion from "@/components/ChatPostulacion";
+import { DECISIONES, Foto, Valoracion } from "@/components/PostulanteCard";
+import ReportarDeportista from "@/components/ReportarDeportista";
 import { BadgeEstado, Chip, btnGhost, fechaCorta } from "@/components/ui";
 import type { EstadoPostulante, Postulante } from "@/lib/datos";
 
@@ -10,21 +12,29 @@ import type { EstadoPostulante, Postulante } from "@/lib/datos";
 export default function PerfilPostulante({
   p,
   convocatoria,
+  chatHabilitado,
   onCerrar,
   onCambiar,
 }: {
   p: Postulante;
   convocatoria?: string;
+  /** Si la convocatoria permite que el postulante escriba en el chat. */
+  chatHabilitado: boolean;
   onCerrar: () => void;
   onCambiar: (nuevo: EstadoPostulante) => void;
 }) {
+  const [reportando, setReportando] = useState(false);
+  const [reportado, setReportado] = useState(false);
+
   useEffect(() => {
-    const tecla = (e: KeyboardEvent) => e.key === "Escape" && onCerrar();
+    // Con el formulario de reporte abierto, Esc solo cierra el reporte.
+    const tecla = (e: KeyboardEvent) => e.key === "Escape" && !reportando && onCerrar();
     window.addEventListener("keydown", tecla);
     return () => window.removeEventListener("keydown", tecla);
-  }, [onCerrar]);
+  }, [onCerrar, reportando]);
 
   return (
+    <>
     <div className="fixed inset-0 z-50 flex justify-end bg-overlay" onClick={onCerrar}>
       <aside
         role="dialog"
@@ -94,29 +104,62 @@ export default function PerfilPostulante({
             <p className="mt-1 font-semibold">{convocatoria ?? "—"}</p>
             <p className="text-xs text-muted">Recibida el {fechaCorta(p.fechaPostulacion)}</p>
           </div>
+
+          <div className="space-y-3 border-t border-border pt-5">
+            <ChatPostulacion usuarioId={p.usuarioId} nombre={p.nombre} chatHabilitado={chatHabilitado} />
+          </div>
+
+          <div className="space-y-2 border-t border-border pt-5">
+            <button
+              type="button"
+              onClick={() => {
+                setReportado(false);
+                setReportando(true);
+              }}
+              className="inline-flex items-center gap-2 text-sm font-semibold text-danger hover:underline"
+            >
+              <Flag size={14} /> Reportar a este deportista
+            </button>
+            {reportado ? (
+              <p className="text-xs font-semibold text-success">
+                Reporte enviado. El equipo de SportMatch lo revisará.
+              </p>
+            ) : null}
+          </div>
         </div>
 
         <div className="sticky bottom-0 flex flex-wrap gap-2 border-t border-border bg-card p-4">
-          {p.estado !== "Aceptado" ? (
+          {DECISIONES.filter((d) => d.estado !== p.estado).map((d) => (
             <button
-              onClick={() => onCambiar("Aceptado")}
-              className="rounded-[13px] bg-primary px-4 py-2 text-sm font-bold text-white"
+              key={d.estado}
+              type="button"
+              onClick={() => onCambiar(d.estado)}
+              className={
+                d.peligro
+                  ? `${btnGhost} hover:border-danger hover:text-danger`
+                  : d.estado === "Aceptado"
+                    ? "rounded-[13px] bg-primary px-4 py-2 text-sm font-bold text-white"
+                    : btnGhost
+              }
             >
-              Aceptar
+              {d.etiqueta}
             </button>
-          ) : null}
-          {p.estado !== "Preseleccionado" && p.estado !== "Aceptado" ? (
-            <button onClick={() => onCambiar("Preseleccionado")} className={btnGhost}>
-              Preseleccionar
-            </button>
-          ) : null}
-          {p.estado !== "Rechazado" ? (
-            <button onClick={() => onCambiar("Rechazado")} className={`${btnGhost} hover:border-danger hover:text-danger`}>
-              Rechazar
-            </button>
-          ) : null}
+          ))}
         </div>
       </aside>
     </div>
+
+    {reportando ? (
+      <ReportarDeportista
+        usuarioId={p.usuarioId}
+        nombre={p.nombre}
+        onCerrar={() => setReportando(false)}
+        onEnviado={() => {
+          setReportando(false);
+          setReportado(true);
+        }}
+      />
+    ) : null}
+    </>
   );
 }

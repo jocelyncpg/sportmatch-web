@@ -51,6 +51,7 @@ const GRUPOS: { titulo: string; items: Item[] }[] = [
       { href: "/convocatorias", label: "Convocatorias", icono: Megaphone, roles: ["club"] },
       { href: "/postulantes", label: "Postulantes", icono: Users, roles: ["club"] },
       { href: "/avisos", label: "Avisos", icono: Bell, roles: ["club"] },
+      { href: "/suscripcion", label: "Mi suscripción", icono: BadgePercent, roles: ["club"] },
     ],
   },
   {

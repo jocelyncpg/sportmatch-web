@@ -32,6 +32,10 @@ export function olvidarSesion(): void {
 
 export function logout(): void {
   olvidarSesion();
+  if (typeof window !== "undefined") {
+    sessionStorage.removeItem("sportmatch_pago_pendiente");
+    sessionStorage.removeItem("sportmatch_pago_checkout");
+  }
   void import("./datos").then(({ reiniciarDatos }) => reiniciarDatos());
   if (typeof window !== "undefined") {
     void fetch("/api/sesion", { method: "DELETE", headers: { "x-requested-with": "sportmatch-web" }, credentials: "same-origin", cache: "no-store", keepalive: true }).catch(() => undefined);
