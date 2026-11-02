@@ -1,0 +1,282 @@
+{
+ "fecha": "2026-11-02T03:21:59.541Z",
+ "pass": 55,
+ "fail": 0,
+ "resultados": [
+  {
+   "nombre": "club: /reportes muestra que es solo para administración",
+   "ok": true,
+   "detalle": ""
+  },
+  {
+   "nombre": "club: /sanciones muestra que es solo para administración",
+   "ok": true,
+   "detalle": ""
+  },
+  {
+   "nombre": "club: /auditoria muestra que es solo para administración",
+   "ok": true,
+   "detalle": ""
+  },
+  {
+   "nombre": "club: /planes muestra que es solo para administración",
+   "ok": true,
+   "detalle": ""
+  },
+  {
+   "nombre": "club: las 10 rutas de administración del BFF -> 403 (no llegan al gateway)",
+   "ok": true,
+   "detalle": "403,403,403,403,403,403,403,403,403,403"
+  },
+  {
+   "nombre": "club: sus rutas siguen igual (payments/plans -> 200)",
+   "ok": true,
+   "detalle": "200"
+  },
+  {
+   "nombre": "cookie de rol falsificada (firma ajena) -> 401, no pasa",
+   "ok": true,
+   "detalle": "401"
+  },
+  {
+   "nombre": "cookie de rol sin firma -> 401",
+   "ok": true,
+   "detalle": ""
+  },
+  {
+   "nombre": "sin sesión: rutas de administración -> 401",
+   "ok": true,
+   "detalle": "401,401,401"
+  },
+  {
+   "nombre": "un deportista no puede entrar a la web (403)",
+   "ok": true,
+   "detalle": "403"
+  },
+  {
+   "nombre": "inicio: tira de moderación con los textos de siempre",
+   "ok": true,
+   "detalle": ""
+  },
+  {
+   "nombre": "inicio: los números reales llegaron, sin '+'",
+   "ok": true,
+   "detalle": "catorias abiertas 0 Postulaciones 0 Moderación Ir a reportes Reportes por atender 116 Cuentas suspendidas 0 Acciones registradas 2 Ver detal"
+  },
+  {
+   "nombre": "reportes: lista pendientes con la persona reportada y quién emitió",
+   "ok": true,
+   "detalle": ""
+  },
+  {
+   "nombre": "reportes: marcar como revisado -> pasa a Revisados",
+   "ok": true,
+   "detalle": ""
+  },
+  {
+   "nombre": "reportes: 'Escalar a sanción' abre el formulario de suspensión de siempre",
+   "ok": true,
+   "detalle": ""
+  },
+  {
+   "nombre": "reportes: aplicar suspensión -> aviso con motivo y duración",
+   "ok": true,
+   "detalle": ""
+  },
+  {
+   "nombre": "reportes: el reporte quedó en Escalados",
+   "ok": true,
+   "detalle": ""
+  },
+  {
+   "nombre": "reportes: transición inválida en el backend -> 409 con mensaje claro",
+   "ok": true,
+   "detalle": "409 Este reporte ya fue resuelto y no admite ese cambio."
+  },
+  {
+   "nombre": "sanciones: 'Personas con reportes' ofrece Suspender",
+   "ok": true,
+   "detalle": ""
+  },
+  {
+   "nombre": "sanciones: D figura como suspendida (7 días) y en Suspensiones vigentes",
+   "ok": true,
+   "detalle": ""
+  },
+  {
+   "nombre": "sanciones: la cuenta sancionada no puede iniciar sesión (403 account_suspended)",
+   "ok": true,
+   "detalle": "403"
+  },
+  {
+   "nombre": "sanciones: sanción duplicada -> 409 con mensaje",
+   "ok": true,
+   "detalle": "409 La cuenta ya tiene una sanción vigente."
+  },
+  {
+   "nombre": "sanciones: no se puede sancionar a un admin ni a sí mismo (422)",
+   "ok": true,
+   "detalle": "422"
+  },
+  {
+   "nombre": "sanciones: la web dice 'definitiva' (el backend 'permanente')",
+   "ok": true,
+   "detalle": ""
+  },
+  {
+   "nombre": "sanciones: en el backend quedó como 'permanente'",
+   "ok": true,
+   "detalle": ""
+  },
+  {
+   "nombre": "sanciones: levantar -> la cuenta vuelve a entrar al instante",
+   "ok": true,
+   "detalle": "200"
+  },
+  {
+   "nombre": "sanciones: la suspensión levantada pasa al Historial con su motivo",
+   "ok": true,
+   "detalle": ""
+  },
+  {
+   "nombre": "auditoría: etiquetas de siempre en la tabla",
+   "ok": true,
+   "detalle": ""
+  },
+  {
+   "nombre": "auditoría: sin códigos crudos del backend ni botones de editar o borrar",
+   "ok": true,
+   "detalle": ""
+  },
+  {
+   "nombre": "auditoría: el chip 'Sanción aplicada' deja solo esas filas",
+   "ok": true,
+   "detalle": "2 filas"
+  },
+  {
+   "nombre": "auditoría: la búsqueda encuentra el motivo de la sanción levantada",
+   "ok": true,
+   "detalle": ""
+  },
+  {
+   "nombre": "auditoría: el BFF no admite borrar ni editar (405)",
+   "ok": true,
+   "detalle": "405"
+  },
+  {
+   "nombre": "planes: lista los planes reales (activos e inactivos)",
+   "ok": true,
+   "detalle": ""
+  },
+  {
+   "nombre": "planes: la tabla de suscripciones por persona sigue visible",
+   "ok": true,
+   "detalle": ""
+  },
+  {
+   "nombre": "planes: crear plan -> aviso y aparece",
+   "ok": true,
+   "detalle": ""
+  },
+  {
+   "nombre": "planes: crear convenio -> aparece",
+   "ok": true,
+   "detalle": ""
+  },
+  {
+   "nombre": "planes: precio con decimales -> mensaje del formulario, no se envía",
+   "ok": true,
+   "detalle": ""
+  },
+  {
+   "nombre": "planes: nombre duplicado -> mensaje del backend en el formulario",
+   "ok": true,
+   "detalle": ""
+  },
+  {
+   "nombre": "planes: guardar sin cambios -> 'No hay cambios para guardar.'",
+   "ok": true,
+   "detalle": ""
+  },
+  {
+   "nombre": "planes: cambiar el precio -> 'actualizado' y se ve $5.990",
+   "ok": true,
+   "detalle": ""
+  },
+  {
+   "nombre": "planes: 'Así se ve en el catálogo' lista plan y convenio",
+   "ok": true,
+   "detalle": ""
+  },
+  {
+   "nombre": "planes: desactivar -> 'ya no aparece en el catálogo'",
+   "ok": true,
+   "detalle": ""
+  },
+  {
+   "nombre": "planes: aparece en 'Desactivados' con el botón Reactivar visible",
+   "ok": true,
+   "detalle": ""
+  },
+  {
+   "nombre": "planes: Reactivar no tiene respaldo en el backend -> 'Esta función aún no está disponible'",
+   "ok": true,
+   "detalle": ""
+  },
+  {
+   "nombre": "planes: el convenio desactivado ya no está en el catálogo público",
+   "ok": true,
+   "detalle": ""
+  },
+  {
+   "nombre": "planes: desactivar de nuevo -> 409",
+   "ok": true,
+   "detalle": "409"
+  },
+  {
+   "nombre": "planes: no existe borrar (el BFF responde 405)",
+   "ok": true,
+   "detalle": "405"
+  },
+  {
+   "nombre": "el navegador no guarda token (ni JWT) en storage ni en cookies visibles",
+   "ok": true,
+   "detalle": "local=[] session=[sportmatch_web_sesion]"
+  },
+  {
+   "nombre": "localStorage no guarda datos de moderación ni de planes",
+   "ok": true,
+   "detalle": ""
+  },
+  {
+   "nombre": "la cookie de sesión es httpOnly y SameSite",
+   "ok": true,
+   "detalle": "true Lax"
+  },
+  {
+   "nombre": "se mantienen las cabeceras de seguridad del panel",
+   "ok": true,
+   "detalle": ""
+  },
+  {
+   "nombre": "503: auditoría con Ms_Users caído muestra un mensaje claro y sin detalles internos",
+   "ok": true,
+   "detalle": ""
+  },
+  {
+   "nombre": "503: el mensaje no deja ver rutas, hosts ni trazas",
+   "ok": true,
+   "detalle": ""
+  },
+  {
+   "nombre": "401: sin sesión del servidor, el panel vuelve al inicio de sesión",
+   "ok": true,
+   "detalle": "http://localhost:3000/?login=1"
+  },
+  {
+   "nombre": "sin errores de JavaScript en las pantallas",
+   "ok": true,
+   "detalle": ""
+  }
+ ]
+}

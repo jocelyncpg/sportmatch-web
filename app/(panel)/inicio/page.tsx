@@ -18,7 +18,7 @@ import {
 } from "@/components/ui";
 import { CENTRO_SANTIAGO, COMUNAS } from "@/lib/comunas";
 import { porComuna, porConvocatoria, porDia, porEstado, porNivel } from "@/lib/stats";
-import { estaActiva, useModeracion } from "@/lib/moderacion.mock";
+import { estaActiva, useModeracion } from "@/lib/api/moderacion";
 import { CLUB_DEMO_ID, useDatos } from "@/lib/datos";
 
 export default function InicioPage() {

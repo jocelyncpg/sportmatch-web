@@ -4,7 +4,7 @@ import { ClipboardList } from "lucide-react";
 import { useMemo, useState } from "react";
 import { SoloRol } from "@/components/SesionContext";
 import { Card, Chip, EstadoVacio, PageHeader, btnGhost, fechaHora, inputClass } from "@/components/ui";
-import { ETIQUETA_ACCION, useModeracion, type AccionAdmin, type RegistroAuditoria } from "@/lib/moderacion.mock";
+import { ETIQUETA_ACCION, useModeracion, type AccionAdmin, type RegistroAuditoria } from "@/lib/api/moderacion";
 
 // HU-48: registro de las acciones de moderación (fecha y hora, admin, recurso afectado y motivo).
 // Es solo de lectura: nadie puede editar ni borrar un registro desde el panel.
@@ -43,7 +43,7 @@ function descargarCsv(filas: RegistroAuditoria[]) {
 }
 
 function Contenido() {
-  const { auditoria } = useModeracion();
+  const { auditoria, error: errorCarga } = useModeracion();
   const [accion, setAccion] = useState<FiltroAccion>("todas");
   const [admin, setAdmin] = useState("");
   const [texto, setTexto] = useState("");
@@ -144,7 +144,7 @@ function Contenido() {
         <EstadoVacio
           icono={ClipboardList}
           titulo="Sin registros"
-          texto={hayFiltros ? "Ningún registro coincide con estos filtros." : "Todavía no hay acciones registradas."}
+          texto={errorCarga || (hayFiltros ? "Ningún registro coincide con estos filtros." : "Todavía no hay acciones registradas.")}
         />
       ) : (
         <Card flush className="overflow-x-auto">

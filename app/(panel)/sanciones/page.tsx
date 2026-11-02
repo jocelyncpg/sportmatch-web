@@ -12,7 +12,7 @@ import {
   textoDuracion,
   useModeracion,
   type Sancion,
-} from "@/lib/moderacion.mock";
+} from "@/lib/api/moderacion";
 
 // HU-45: suspender (temporal o definitiva) a quienes acumulan reportes o conductas indebidas.
 export default function SancionesPage() {
@@ -25,7 +25,7 @@ export default function SancionesPage() {
 
 function Contenido() {
   const sesion = useSesion();
-  const { reportes, sanciones } = useModeracion();
+  const { reportes, sanciones, error: errorCarga } = useModeracion();
   const [sancionando, setSancionando] = useState<string | null>(null);
   const [levantando, setLevantando] = useState<string | null>(null);
   const [motivo, setMotivo] = useState("");
@@ -44,8 +44,8 @@ function Contenido() {
     setMensaje("");
   }
 
-  function levantar(id: string) {
-    const r = levantarSancion(id, sesion.email, motivo);
+  async function levantar(id: string) {
+    const r = await levantarSancion(id, sesion.email, motivo);
     if (!r.ok) {
       setError(r.motivo);
       return;
@@ -61,8 +61,8 @@ function Contenido() {
         subtitulo="Suspende cuentas con conductas indebidas. La persona recibe una notificación con el motivo y la duración."
       />
 
-      {mensaje ? (
-        <p className="mb-4 rounded-[13px] bg-chip px-4 py-3 text-sm font-semibold text-accent">{mensaje}</p>
+      {mensaje || errorCarga ? (
+        <p className="mb-4 rounded-[13px] bg-chip px-4 py-3 text-sm font-semibold text-accent">{mensaje || errorCarga}</p>
       ) : null}
 
       <h2 className="mb-3 text-sm font-bold">Personas con reportes</h2>

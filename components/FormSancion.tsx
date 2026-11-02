@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Campo, Chip, btnGhost, btnPrimary, inputClass } from "@/components/ui";
-import { aplicarSancion, type TipoSancion } from "@/lib/moderacion.mock";
+import { aplicarSancion, type TipoSancion } from "@/lib/api/moderacion";
 
 // HU-45: formulario para suspender a una persona (temporal o definitiva). Se usa desde Reportes y desde Sanciones.
 export default function FormSancion({
@@ -26,8 +26,8 @@ export default function FormSancion({
   const [motivo, setMotivo] = useState("");
   const [error, setError] = useState("");
 
-  function aplicar() {
-    const r = aplicarSancion(
+  async function aplicar() {
+    const r = await aplicarSancion(
       { usuarioId, usuarioNombre, tipo, dias: tipo === "temporal" ? Number(dias) : undefined, motivo, reporteId },
       admin
     );

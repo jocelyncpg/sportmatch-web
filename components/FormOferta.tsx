@@ -11,7 +11,7 @@ import {
   type DatosOferta,
   type Oferta,
   type TipoOferta,
-} from "@/lib/planes.mock";
+} from "@/lib/api/ofertas";
 
 const DURACIONES = [
   { dias: 30, etiqueta: "1 mes" },
@@ -50,7 +50,7 @@ export default function FormOferta({
   const precioNuevo = precio.trim() === "" ? NaN : Number(precio);
   const cambiaPrecio = editando && Number.isFinite(precioNuevo) && precioNuevo !== oferta.precio;
 
-  function guardar() {
+  async function guardar() {
     const datos: DatosOferta = {
       tipo,
       audiencia,
@@ -61,7 +61,7 @@ export default function FormOferta({
       duracionDias: duracion.trim() === "" ? null : Number(duracion),
       beneficios: beneficios.split("\n"),
     };
-    const r = oferta ? editarOferta(oferta.id, datos, admin) : crearOferta(datos, admin);
+    const r = oferta ? await editarOferta(oferta.id, datos, admin) : await crearOferta(datos, admin);
     if (!r.ok) {
       setError(r.motivo);
       return;
