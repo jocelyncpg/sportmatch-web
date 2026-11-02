@@ -1,6 +1,12 @@
 import { useEffect, useSyncExternalStore } from "react";
-import { SIN_SOPORTE, audienciaAlBackend, limpiarOferta as limpiar, ofertaDesdeApi as aOferta, tipoOfertaAlBackend, validarOferta as validar } from "./mapeo-admin.mjs";
-import { listarPlanesAdmin, crearPlan, editarPlan, desactivarPlan, type PlanAdmin } from "./planesAdmin";
+import {
+  audienciaAlBackend, limpiarOferta as limpiar, ofertaDesdeApi as aOferta, suscripcionDesdeApi as aSuscripcion,
+  tipoOfertaAlBackend, validarOferta as validar,
+} from "./mapeo-admin.mjs";
+import {
+  crearPlan, desactivarPlan, editarPlan, LIMITE_SUSCRIPCIONES, listarPlanesAdmin, listarSuscripcionesPlan, reactivarPlan,
+  type PlanAdmin,
+} from "./planesAdmin";
 
 // Planes y convenios (HU-56) para la pantalla de admin, tomados de Ms-club por el BFF (/payments/admin/plans).
 // La pantalla sigue usando el modelo de siempre (plan o convenio, audiencia, activa...); los nombres del backend
@@ -31,13 +37,11 @@ export interface Oferta {
   duracionDias: number | null;
   beneficios: string[];
   activa: boolean;
-  /** El plan base (Gratuito) no se puede desactivar: toda cuenta nueva parte ahí. El backend no tiene este concepto. */
+  /** El plan base (Gratuito) no se puede desactivar: toda cuenta nueva parte ahí. */
   base?: boolean;
-  /** Suscripciones vigentes de la oferta (el backend informa la cantidad, no quién). */
-  vigentes: number;
   creadaEn: string; // ISO
   actualizadaEn: string; // ISO
-  desactivadaEn?: string; // ISO (el backend no la informa)
+  desactivadaEn?: string; // ISO
   motivoDesactivacion?: string;
 }
 
@@ -88,7 +92,8 @@ export function duracionTexto(dias: number | null): string {
 export const precioTexto = (o: Pick<Oferta, "precio" | "duracionDias">) =>
   o.precio === 0 ? "Gratis" : `${formatearCLP(o.precio)} por ${duracionTexto(o.duracionDias).toLowerCase()}`;
 
-// ---------- traducción API -> modelo de la pantalla ----------
+const fechaLarga = (iso: string) =>
+  new Date(iso).toLocaleDateString("es-CL", { day: "numeric", month: "short", year: "numeric" });
 
 // ---------- store ----------
 
@@ -105,21 +110,39 @@ const suscribir = (o: () => void) => {
   };
 };
 
-/** Trae de la API todos los planes y convenios, activos e inactivos (hasta 5 páginas de 50). */
+const MAX_PAGINAS = 5;
+
+/** Las suscripciones de un plan (hasta 5 páginas de 100: las vigentes primero). */
+async function suscripcionesDe(plan: PlanAdmin): Promise<Suscripcion[]> {
+  const salida: Suscripcion[] = [];
+  for (let pagina = 1; pagina <= MAX_PAGINAS; pagina++) {
+    const r = await listarSuscripcionesPlan(plan.id, pagina);
+    salida.push(...r.items.map((s) => aSuscripcion(s, plan.id)));
+    if (r.items.length < LIMITE_SUSCRIPCIONES || salida.length >= r.total) break;
+  }
+  return salida;
+}
+
+/** Trae de la API todos los planes y convenios, activos e inactivos, y las suscripciones de cada uno. */
 export async function cargarOfertas(): Promise<void> {
   const mio = ++pedido;
   try {
     const todos: PlanAdmin[] = [];
-    for (let pagina = 1; pagina <= 5; pagina++) {
+    for (let pagina = 1; pagina <= MAX_PAGINAS; pagina++) {
       const r = await listarPlanesAdmin({ estado: "todos", pagina, limit: 50 });
       todos.push(...r.items);
       if (r.items.length < 50) break;
     }
+    // De a pocos planes a la vez, para no saturar el servicio.
+    const suscripciones: Suscripcion[] = [];
+    for (let i = 0; i < todos.length; i += 6) {
+      const lotes = await Promise.all(todos.slice(i, i + 6).map(suscripcionesDe));
+      for (const lote of lotes) suscripciones.push(...lote);
+    }
     if (mio !== pedido) return;
     crudos.clear();
     for (const p of todos) crudos.set(String(p.id), p);
-    // La API los entrega del más reciente al más antiguo; la pantalla los ordena a su manera.
-    estado = { ofertas: todos.map(aOferta), suscripciones: [] };
+    estado = { ofertas: todos.map(aOferta), suscripciones };
   } catch (e) {
     if (mio !== pedido) return;
     estado = { ...estado, error: e instanceof Error && e.message ? e.message : "No se pudo cargar la información." };
@@ -162,8 +185,6 @@ export function catalogoPublico(ofertas: Oferta[], audiencia: Audiencia): Oferta
   return ofertas.filter((o) => o.activa && o.audiencia === audiencia).sort((a, b) => a.precio - b.precio);
 }
 
-// ---------- validación ----------
-
 const mensajeDe = (e: unknown, defecto: string) => (e instanceof Error && e.message ? e.message : defecto);
 
 // ---------- acciones del administrador (el backend deja el registro de auditoría) ----------
@@ -173,8 +194,6 @@ export async function crearOferta(datos: DatosOferta, admin: string): Promise<Re
   const d = limpiar(datos);
   const error = validar(d);
   if (error) return { ok: false, motivo: error };
-  // El backend no tiene planes de pago ni gratuitos "sin vencimiento": la duración es obligatoria.
-  if (d.duracionDias === null) return { ok: false, motivo: SIN_SOPORTE };
   try {
     await crearPlan({
       nombre: d.nombre, tipo: audienciaAlBackend(d.audiencia), categoria: tipoOfertaAlBackend(d.tipo),
@@ -217,7 +236,6 @@ export async function editarOferta(id: string, datos: DatosOferta, admin: string
   const d = limpiar({ ...datos, tipo: antes.tipo, audiencia: antes.audiencia });
   const error = validar(d);
   if (error) return { ok: false, motivo: error };
-  if (d.duracionDias === null) return { ok: false, motivo: SIN_SOPORTE };
   const lista = cambios(antes, d);
   if (lista.length === 0) return { ok: false, motivo: "No hay cambios para guardar." };
   try {
@@ -228,8 +246,8 @@ export async function editarOferta(id: string, datos: DatosOferta, admin: string
   } catch (e) {
     return { ok: false, motivo: mensajeDe(e, "No se pudo guardar.") };
   }
+  const vigentes = vigentesDe(estado.suscripciones, id).length;
   await cargarOfertas();
-  const vigentes = antes.vigentes;
   let aviso = `"${d.nombre}" actualizado.`;
   if (antes.precio !== d.precio && vigentes > 0) {
     aviso += ` El nuevo precio vale solo para nuevas contrataciones: ${vigentes} ${
@@ -248,6 +266,8 @@ export async function desactivarOferta(id: string, admin: string, motivo: string
   if (!o.activa) return { ok: false, motivo: "Ya está desactivado." };
   const limpio = motivo.trim();
   if (limpio.length < 5) return { ok: false, motivo: "Escribe el motivo de la desactivación (mínimo 5 letras)." };
+  const vigentes = vigentesDe(estado.suscripciones, id);
+  const hasta = ultimoVencimiento(vigentes);
   try {
     await desactivarPlan(Number(id), limpio);
   } catch (e) {
@@ -255,15 +275,25 @@ export async function desactivarOferta(id: string, admin: string, motivo: string
   }
   await cargarOfertas();
   const nota =
-    o.vigentes === 0
+    vigentes.length === 0
       ? "No tenía suscripciones vigentes."
-      : `${o.vigentes} ${o.vigentes === 1 ? "suscripción vigente sigue" : "suscripciones vigentes siguen"} activa${o.vigentes === 1 ? "" : "s"}.`;
+      : `${vigentes.length} ${vigentes.length === 1 ? "suscripción vigente sigue" : "suscripciones vigentes siguen"} activa${
+          vigentes.length === 1 ? "" : "s"
+        }${hasta ? ` hasta el ${fechaLarga(hasta)}` : ""}.`;
   return { ok: true, aviso: `"${o.nombre}" ya no aparece en el catálogo. ${nota}` };
 }
 
-/** El backend no tiene una ruta para reactivar un plan o convenio desactivado. */
-export function reactivarOferta(id: string, admin: string): Resultado {
-  void id;
+/** Vuelve al catálogo una oferta desactivada. Si otro plan activo tomó su nombre, el backend responde 409 con el motivo. */
+export async function reactivarOferta(id: string, admin: string): Promise<Resultado> {
   void admin;
-  return { ok: false, motivo: SIN_SOPORTE };
+  const o = estado.ofertas.find((x) => x.id === id);
+  if (!o) return { ok: false, motivo: "No encontramos este plan o convenio." };
+  if (o.activa) return { ok: false, motivo: "Ya está activo." };
+  try {
+    await reactivarPlan(Number(id));
+  } catch (e) {
+    return { ok: false, motivo: mensajeDe(e, "No se pudo reactivar.") };
+  }
+  await cargarOfertas();
+  return { ok: true, aviso: `"${o.nombre}" vuelve a mostrarse en el catálogo.` };
 }

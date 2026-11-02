@@ -61,11 +61,16 @@ export type ReporteAdmin = {
   detalle: string;
   reportante: PersonaReporte | null;
   reportante_rol: string | null;
-  /** La cuenta a la que se reportó (null si ya no existe). Es la que se sanciona. */
+  /** La cuenta a la que se reportó, o la que hizo la actividad o el mensaje reportados (null si ya no existe). Es la que se sanciona. */
   reportado: PersonaReporte | null;
+  /** Actividad o mensaje: true si no se pudo averiguar quién lo hizo (el servicio de origen no respondió o ya no existe). */
+  autor_no_disponible: boolean;
   estado: EstadoReporte;
   fecha_creacion: string;
   fecha_revision: string | null;
+  /** Quién lo resolvió y la nota que escribió; null mientras está pendiente (o si esa cuenta ya no existe). */
+  revisado_por: PersonaReporte | null;
+  motivo_revision: string | null;
 };
 
 export const LIMITE_REPORTES = 50;

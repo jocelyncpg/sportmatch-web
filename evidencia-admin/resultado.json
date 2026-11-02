@@ -1,6 +1,6 @@
 {
- "fecha": "2026-11-02T03:21:59.541Z",
- "pass": 55,
+ "fecha": "2026-11-02T06:32:22.944Z",
+ "pass": 79,
  "fail": 0,
  "resultados": [
   {
@@ -61,7 +61,7 @@
   {
    "nombre": "inicio: los números reales llegaron, sin '+'",
    "ok": true,
-   "detalle": "catorias abiertas 0 Postulaciones 0 Moderación Ir a reportes Reportes por atender 116 Cuentas suspendidas 0 Acciones registradas 2 Ver detal"
+   "detalle": "catorias abiertas 0 Postulaciones 0 Moderación Ir a reportes Reportes por atender 119 Cuentas suspendidas 0 Acciones registradas 2 Ver detal"
   },
   {
    "nombre": "reportes: lista pendientes con la persona reportada y quién emitió",
@@ -72,6 +72,11 @@
    "nombre": "reportes: marcar como revisado -> pasa a Revisados",
    "ok": true,
    "detalle": ""
+  },
+  {
+   "nombre": "reportes: la tarjeta dice quién lo revisó (el administrador real) y su nota, no un texto fijo",
+   "ok": true,
+   "detalle": "Perfil Perfil de Bmlpaeo L. Revisado Bmlpaeo L. Acoso o trato irrespetuoso Detalle de prueba del reporte para el panel web Emitido por Alma R. · 2 nov 2026, 03:"
   },
   {
    "nombre": "reportes: 'Escalar a sanción' abre el formulario de suspensión de siempre",
@@ -89,9 +94,79 @@
    "detalle": ""
   },
   {
+   "nombre": "reportes: el reporte de la actividad trae a la cuenta que la publicó (Ms_Activities)",
+   "ok": true,
+   "detalle": ""
+  },
+  {
+   "nombre": "reportes: el reporte del mensaje trae a la cuenta que lo escribió (Ms_Matching)",
+   "ok": true,
+   "detalle": ""
+  },
+  {
+   "nombre": "reportes: una actividad que ya no existe sale sin autor y marcada, sin inventar datos",
+   "ok": true,
+   "detalle": ""
+  },
+  {
+   "nombre": "reportes: el autor solo trae nombre corto (sin correo ni RUT)",
+   "ok": true,
+   "detalle": ""
+  },
+  {
+   "nombre": "reportes: la actividad se muestra con el nombre real del autor",
+   "ok": true,
+   "detalle": ""
+  },
+  {
+   "nombre": "reportes: sancionar desde una actividad -> aviso con motivo y duración",
+   "ok": true,
+   "detalle": ""
+  },
+  {
+   "nombre": "reportes: la cuenta que publicó la actividad queda suspendida (403 account_suspended)",
+   "ok": true,
+   "detalle": "403"
+  },
+  {
+   "nombre": "reportes: sancionar desde un mensaje (definitiva) -> aviso",
+   "ok": true,
+   "detalle": ""
+  },
+  {
+   "nombre": "reportes: la cuenta que escribió el mensaje queda suspendida",
+   "ok": true,
+   "detalle": "403"
+  },
+  {
+   "nombre": "reportes: los dos reportes quedaron escalados con el administrador real como actor",
+   "ok": true,
+   "detalle": ""
+  },
+  {
+   "nombre": "reportes: sin autor conocido -> 'Esta función aún no está disponible' y el reporte sigue pendiente",
+   "ok": true,
+   "detalle": ""
+  },
+  {
    "nombre": "reportes: transición inválida en el backend -> 409 con mensaje claro",
    "ok": true,
    "detalle": "409 Este reporte ya fue resuelto y no admite ese cambio."
+  },
+  {
+   "nombre": "reportes: el listado por defecto trae solo pendientes y el límite máximo es 100 (101 -> rechazado)",
+   "ok": true,
+   "detalle": "100 pendientes, límite 101 -> 422"
+  },
+  {
+   "nombre": "reportes: con la base de QA (más de 100 reportes) el listado pagina sin repetir ni perder",
+   "ok": true,
+   "detalle": "100 + 21"
+  },
+  {
+   "nombre": "sanciones: un reporte sin autor conocido no aparece como una persona",
+   "ok": true,
+   "detalle": ""
   },
   {
    "nombre": "sanciones: 'Personas con reportes' ofrece Suspender",
@@ -151,7 +226,7 @@
   {
    "nombre": "auditoría: el chip 'Sanción aplicada' deja solo esas filas",
    "ok": true,
-   "detalle": "2 filas"
+   "detalle": "4 filas"
   },
   {
    "nombre": "auditoría: la búsqueda encuentra el motivo de la sanción levantada",
@@ -180,6 +255,16 @@
   },
   {
    "nombre": "planes: crear convenio -> aparece",
+   "ok": true,
+   "detalle": ""
+  },
+  {
+   "nombre": "planes: la tabla de suscripciones por persona muestra a la persona, el plan y el precio pagado",
+   "ok": true,
+   "detalle": ""
+  },
+  {
+   "nombre": "planes: la tarjeta cuenta la suscripción vigente",
    "ok": true,
    "detalle": ""
   },
@@ -219,7 +304,42 @@
    "detalle": ""
   },
   {
-   "nombre": "planes: Reactivar no tiene respaldo en el backend -> 'Esta función aún no está disponible'",
+   "nombre": "planes: la tarjeta desactivada muestra la fecha y el motivo reales",
+   "ok": true,
+   "detalle": ""
+  },
+  {
+   "nombre": "planes: otro plan activo puede tomar el nombre de uno desactivado",
+   "ok": true,
+   "detalle": "201"
+  },
+  {
+   "nombre": "planes: reactivar con el nombre ya tomado -> el aviso trae el motivo del backend (409)",
+   "ok": true,
+   "detalle": ""
+  },
+  {
+   "nombre": "planes: reactivar con el nombre libre -> 'vuelve a mostrarse en el catálogo'",
+   "ok": true,
+   "detalle": ""
+  },
+  {
+   "nombre": "planes: el convenio reactivado está otra vez en el catálogo público",
+   "ok": true,
+   "detalle": ""
+  },
+  {
+   "nombre": "planes: al reactivar se borran la fecha y el motivo de desactivación",
+   "ok": true,
+   "detalle": ""
+  },
+  {
+   "nombre": "planes: reactivar uno activo -> 409",
+   "ok": true,
+   "detalle": "409"
+  },
+  {
+   "nombre": "planes: la reactivación quedó en la auditoría",
    "ok": true,
    "detalle": ""
   },
