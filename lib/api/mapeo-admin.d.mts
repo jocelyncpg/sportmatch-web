@@ -1,0 +1,19 @@
+import type { AccionAdmin, RegistroAuditoria, Reporte, Sancion, TipoSancion } from "./moderacion";
+import type { DatosOferta, Oferta, TipoOferta, Audiencia } from "./ofertas";
+import type { PlanAdmin } from "./planesAdmin";
+import type { ReporteAdmin } from "./reportes";
+import type { Sancion as SancionApi } from "./sanciones";
+import type { EventoAuditoria } from "./auditoria";
+
+export const SIN_SOPORTE: string;
+export function reporteDesdeApi(r: ReporteAdmin): Reporte;
+export function sancionDesdeApi(s: SancionApi): Sancion;
+export function tipoSancionAlBackend(tipo: TipoSancion): "temporal" | "permanente";
+export const ACCION_UI: Record<string, AccionAdmin>;
+export function resumenDeAccion(e: Pick<EventoAuditoria, "accion" | "detalle">): string;
+export function registroDesdeApi(e: EventoAuditoria): RegistroAuditoria;
+export function ofertaDesdeApi(p: PlanAdmin): Oferta;
+export function audienciaAlBackend(audiencia: Audiencia): "USUARIO" | "CLUB";
+export function tipoOfertaAlBackend(tipo: TipoOferta): "PLAN" | "CONVENIO";
+export function limpiarOferta(d: DatosOferta): DatosOferta;
+export function validarOferta(d: DatosOferta): string | null;

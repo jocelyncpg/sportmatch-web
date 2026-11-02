@@ -1,7 +1,7 @@
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
-import { COOKIE_TOKEN, COOKIE_USER, opcionesCookie, origenSeguro } from "@/lib/servidor/bff";
-import { mensajeBackend, rutaGateway } from "@/lib/servidor/core.mjs";
+import { COOKIE_TOKEN, COOKIE_USER, leerUsuarioFirmado, opcionesCookie, origenSeguro } from "@/lib/servidor/bff";
+import { decidirAcceso, mensajeBackend, rutaGateway } from "@/lib/servidor/core.mjs";
 
 type Contexto = {
   params: Promise<{ ruta: string[] }>;
@@ -18,10 +18,27 @@ async function proxy(request: Request, context: Contexto) {
   if (path === "users/reports" && method !== "POST") {
     return NextResponse.json({ error: "Método no permitido." }, { status: 405 });
   }
+  // Las rutas de administración (users/admin/*, payments/admin/*) solo pasan con una sesión de administrador. El
+  // rol sale de la cookie firmada que emite este servidor, nunca de algo que mande el navegador; quien no es admin
+  // recibe 403 sin que la petición llegue al gateway.
+  const jar = await cookies();
+  const rol = leerUsuarioFirmado(jar.get(COOKIE_USER)?.value)?.rol ?? null;
+  const acceso = decidirAcceso(ruta.join("/"), method, rol);
+  if (!acceso.permitido) {
+    const mensajes: Record<number, string> = {
+      401: "La sesión expiró. Inicia sesión nuevamente.",
+      403: "No tienes permiso para realizar esta acción.",
+      405: "Método no permitido.",
+    };
+    return NextResponse.json(
+      { error: mensajes[acceso.status] ?? "Ruta no disponible." },
+      { status: acceso.status, headers: { "cache-control": "no-store" } },
+    );
+  }
   if (method !== "GET" && !origenSeguro(request)) {
     return NextResponse.json({ error: "Solicitud no permitida." }, { status: 403 });
   }
-  const token = (await cookies()).get(COOKIE_TOKEN)?.value;
+  const token = jar.get(COOKIE_TOKEN)?.value;
   if (!token) {
     return NextResponse.json({ error: "La sesión expiró. Inicia sesión nuevamente." }, { status: 401 });
   }
@@ -83,6 +100,7 @@ async function proxy(request: Request, context: Contexto) {
         409: "La solicitud entra en conflicto con el estado actual.",
         422: "Revisa los datos ingresados.",
         429: "Demasiadas solicitudes. Inténtalo más tarde.",
+        503: "El servicio no está disponible. Inténtalo nuevamente.",
       };
       let payload: unknown;
       try {

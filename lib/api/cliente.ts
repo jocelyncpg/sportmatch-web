@@ -56,6 +56,8 @@ export async function apiGw<T>(ruta: string, opciones: OpcionesApi = {}): Promis
       409: "La solicitud entra en conflicto con el estado actual.",
       422: "Revisa los datos ingresados.",
       429: "Demasiadas solicitudes. Inténtalo más tarde.",
+      502: "El servicio no está disponible. Inténtalo nuevamente.",
+      503: "El servicio no está disponible. Inténtalo nuevamente.",
     };
     const fallback = known[response.status] ?? "No se pudo completar la solicitud.";
     throw new ApiError(errorBff(payload, fallback), response.status);

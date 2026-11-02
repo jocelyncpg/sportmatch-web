@@ -11,7 +11,7 @@ import {
   sancionVigenteDe,
   useModeracion,
   type EstadoReporte,
-} from "@/lib/moderacion.mock";
+} from "@/lib/api/moderacion";
 
 // HU-47: el moderador atiende los reportes de la comunidad: los revisa o los escala a sanción (HU-45).
 export default function ReportesPage() {
@@ -32,7 +32,7 @@ const FILTROS: { valor: Filtro; etiqueta: string }[] = [
 
 function Contenido() {
   const sesion = useSesion();
-  const { reportes, sanciones } = useModeracion();
+  const { reportes, sanciones, error: errorCarga } = useModeracion();
   const [filtro, setFiltro] = useState<Filtro>("pendiente");
   const [abierto, setAbierto] = useState<{ id: string; modo: "revisar" | "sancionar" } | null>(null);
   const [nota, setNota] = useState("");
@@ -62,8 +62,8 @@ function Contenido() {
     setMensaje("");
   }
 
-  function revisar(id: string) {
-    const r = marcarRevisado(id, sesion.email, nota);
+  async function revisar(id: string) {
+    const r = await marcarRevisado(id, sesion.email, nota);
     if (!r.ok) {
       setError(r.motivo);
       return;
@@ -91,8 +91,8 @@ function Contenido() {
         ))}
       </div>
 
-      {mensaje ? (
-        <p className="mb-4 rounded-[13px] bg-chip px-4 py-3 text-sm font-semibold text-accent">{mensaje}</p>
+      {mensaje || errorCarga ? (
+        <p className="mb-4 rounded-[13px] bg-chip px-4 py-3 text-sm font-semibold text-accent">{mensaje || errorCarga}</p>
       ) : null}
 
       {lista.length === 0 ? (

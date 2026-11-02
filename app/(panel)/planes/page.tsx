@@ -25,12 +25,10 @@ import {
   formatearCLP,
   precioTexto,
   reactivarOferta,
-  ultimoVencimiento,
   usePlanes,
-  vigentesDe,
   type Audiencia,
   type Oferta,
-} from "@/lib/planes.mock";
+} from "@/lib/api/ofertas";
 
 // HU-56: el administrador de la plataforma mantiene al día la oferta de SportMatch (planes y convenios).
 export default function PlanesPage() {
@@ -62,7 +60,7 @@ const dia = (iso: string) => fechaCorta(iso.slice(0, 10));
 
 function Contenido() {
   const sesion = useSesion();
-  const { ofertas, suscripciones } = usePlanes();
+  const { ofertas, suscripciones, error: errorCarga } = usePlanes();
   const [filtro, setFiltro] = useState<Filtro>("todos");
   const [creando, setCreando] = useState(false);
   const [abierto, setAbierto] = useState<{ id: string; modo: "editar" | "desactivar" } | null>(null);
@@ -83,7 +81,8 @@ function Contenido() {
     );
 
   const activas = ofertas.filter((o) => o.activa).length;
-  const vigentesTotal = suscripciones.filter((s) => estaVigente(s)).length;
+  // El backend informa cuántas suscripciones vigentes tiene cada plan, no quiénes son.
+  const vigentesTotal = ofertas.reduce((total, o) => total + o.vigentes, 0);
 
   function abrir(id: string, modo: "editar" | "desactivar") {
     setAbierto({ id, modo });
@@ -93,8 +92,8 @@ function Contenido() {
     setMensaje("");
   }
 
-  function desactivar(id: string) {
-    const r = desactivarOferta(id, sesion.email, motivo);
+  async function desactivar(id: string) {
+    const r = await desactivarOferta(id, sesion.email, motivo);
     if (!r.ok) {
       setError(r.motivo);
       return;
@@ -142,8 +141,8 @@ function Contenido() {
         ]}
       />
 
-      {mensaje ? (
-        <p className="mt-4 rounded-[13px] bg-chip px-4 py-3 text-sm font-semibold text-accent">{mensaje}</p>
+      {mensaje || errorCarga ? (
+        <p className="mt-4 rounded-[13px] bg-chip px-4 py-3 text-sm font-semibold text-accent">{mensaje || errorCarga}</p>
       ) : null}
 
       {creando ? (
@@ -177,7 +176,6 @@ function Contenido() {
             <TarjetaOferta
               key={o.id}
               oferta={o}
-              suscripciones={suscripciones}
               panel={abierto?.id === o.id ? abierto.modo : null}
               admin={sesion.email}
               motivo={motivo}
@@ -278,7 +276,6 @@ function Contenido() {
 
 function TarjetaOferta({
   oferta: o,
-  suscripciones,
   panel,
   admin,
   motivo,
@@ -292,7 +289,6 @@ function TarjetaOferta({
   onListo,
 }: {
   oferta: Oferta;
-  suscripciones: ReturnType<typeof usePlanes>["suscripciones"];
   panel: "editar" | "desactivar" | null;
   admin: string;
   motivo: string;
@@ -305,8 +301,8 @@ function TarjetaOferta({
   onCerrar: () => void;
   onListo: (aviso: string) => void;
 }) {
-  const vigentes = vigentesDe(suscripciones, o.id);
-  const hasta = ultimoVencimiento(vigentes);
+  const vigentes = { length: o.vigentes }; // el backend informa cuántas, no quiénes
+  const hasta: string | null = null;
 
   return (
     <Card className={o.activa ? "" : "opacity-90"}>

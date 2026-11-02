@@ -3,7 +3,7 @@
 import type { LucideIcon } from "lucide-react";
 import Image from "next/image";
 import { useState } from "react";
-import type { EstadoReporte } from "@/lib/moderacion.mock";
+import type { EstadoReporte } from "@/lib/api/moderacion";
 import type { EstadoPostulante } from "@/lib/datos";
 
 export const inputClass =

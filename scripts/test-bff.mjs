@@ -1,6 +1,9 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import {
+  decidirAcceso,
+  metodosAdmin,
   cantidadIntentos,
   claveIntentos,
   errorBff,
@@ -98,4 +101,77 @@ test("poda intentos vencidos al superar cinco mil claves", () => {
   for (let index = 0; index < 5001; index++) falloLogin(`prueba-poda-${index}`, 0);
   limitado("prueba-poda-activador", 900001);
   assert.equal(cantidadIntentos(), 1);
+});
+
+// -- Rutas de administración (HU-45, 47, 48 y 56) -----------------------------------------------------------------
+
+const ID = "3f2a9c1e-5b7d-4e8a-9c21-7d4e5f6a8b90";
+const RUTAS_ADMIN = [
+  ["GET", "users/admin/reports"], ["PATCH", `users/admin/reports/${ID}`],
+  ["GET", "users/admin/sanctions"], ["POST", "users/admin/sanctions"], ["GET", `users/admin/sanctions/${ID}`], ["POST", `users/admin/sanctions/${ID}/lift`],
+  ["GET", "users/admin/audit-events"],
+  ["GET", "payments/admin/plans"], ["POST", "payments/admin/plans"], ["PATCH", "payments/admin/plans/7"], ["POST", "payments/admin/plans/7/deactivate"],
+];
+
+test("un administrador pasa por todas las rutas de administración con su método", () => {
+  for (const [metodo, ruta] of RUTAS_ADMIN) {
+    assert.deepEqual(decidirAcceso(ruta, metodo, "admin"), { permitido: true, status: 200 }, `${metodo} ${ruta}`);
+    assert.ok(rutaGateway(ruta.split("/")), ruta);       // y el BFF las acepta como destino del gateway
+  }
+});
+
+test("un club no pasa a las rutas de administración: 403 sin llegar al gateway", () => {
+  for (const [metodo, ruta] of RUTAS_ADMIN) {
+    assert.deepEqual(decidirAcceso(ruta, metodo, "club"), { permitido: false, status: 403 }, `${metodo} ${ruta}`);
+  }
+});
+
+test("sin sesión (o con un rol desconocido) tampoco pasa: 401 o 403", () => {
+  for (const [metodo, ruta] of RUTAS_ADMIN) {
+    for (const rol of [null, undefined, ""]) assert.deepEqual(decidirAcceso(ruta, metodo, rol), { permitido: false, status: 401 }, `${metodo} ${ruta}`);
+    for (const rol of ["player", "ADMIN", "administrador", "club_admin"]) {
+      assert.equal(decidirAcceso(ruta, metodo, rol).permitido, false, `${rol} ${ruta}`);
+    }
+  }
+});
+
+test("en las rutas de administración solo valen los métodos que el panel necesita (405 aunque sea admin)", () => {
+  for (const [metodo, ruta] of [["DELETE", "payments/admin/plans/7"], ["PUT", "payments/admin/plans/7"], ["DELETE", "payments/admin/plans"],
+    ["POST", "users/admin/audit-events"], ["PATCH", "users/admin/audit-events"], ["DELETE", `users/admin/sanctions/${ID}`],
+    ["POST", `users/admin/reports/${ID}`], ["GET", "payments/admin/plans/7/deactivate"], ["PUT", "users/admin/sanctions"]]) {
+    assert.deepEqual(decidirAcceso(ruta, metodo, "admin"), { permitido: false, status: 405 }, `${metodo} ${ruta}`);
+  }
+  assert.deepEqual(metodosAdmin("payments/admin/plans/7/deactivate"), ["POST"]);
+  assert.equal(metodosAdmin("payments/plans"), null);
+});
+
+test("no se abre nada fuera de lo pactado: ids mal formados, rutas vecinas y recorridos de carpeta", () => {
+  for (const ruta of ["users/admin", "users/admin/", "users/admin/users", "users/admin/reports/no-es-uuid", `users/admin/reports/${ID}/otra`,
+    "users/admin/sanctions/1", `users/admin/sanctions/${ID}/delete`, "users/admin/audit-events/1", "users/internal/x",
+    "payments/admin", "payments/admin/plans/abc", "payments/admin/plans/-1", "payments/admin/plans/1234567890", "payments/admin/plans/7/otra",
+    "payments/admin/plans/../plans", "users/admin/../me", "users//admin/reports", "payments/admin\plans", "internal/v1/accounts/x/status",
+    "users/admin/reportsx", "xusers/admin/reports"]) {
+    for (const rol of ["admin", "club", null]) assert.equal(decidirAcceso(ruta, "GET", rol).permitido, false, `${rol} ${ruta}`);
+    assert.equal(rutaGateway(ruta.split("/")), null, ruta);
+  }
+});
+
+test("las rutas públicas y las del club siguen igual para cualquier sesión (y la lista blanca de club no cambió)", () => {
+  for (const [metodo, ruta] of [["GET", "clubs/me"], ["POST", "clubs/announcements"], ["GET", "payments/plans"], ["GET", "payments/subscription/me"],
+    ["POST", "payments/webpay/initiate"], ["POST", "payments/webpay/commit"], ["POST", "users/reports"]]) {
+    for (const rol of ["club", "admin", null]) assert.deepEqual(decidirAcceso(ruta, metodo, rol), { permitido: true, status: 200 }, `${rol} ${metodo} ${ruta}`);
+  }
+  for (const ruta of ["users/me", "users/reports/abc", "payments/webpay/mock", "payments/admin/plans/extra/otra"]) {
+    assert.deepEqual(decidirAcceso(ruta, "GET", "admin"), { permitido: false, status: 404 }, ruta);
+  }
+  assert.equal(rutasPermitidas("users/admin/reports"), false);      // la lista de club/pública sigue sin abrirlas
+  assert.equal(rutasPermitidas("payments/admin/plans"), false);
+});
+
+test("el manejador de /api/gw decide el acceso con el rol de la cookie firmada del servidor, antes de llamar al gateway", () => {
+  const fuente = readFileSync(new URL("../app/api/gw/[...ruta]/route.ts", import.meta.url), "utf8");
+  assert.match(fuente, /leerUsuarioFirmado\(jar\.get\(COOKIE_USER\)/);
+  assert.match(fuente, /decidirAcceso\(ruta\.join\("\/"\), method, rol\)/);
+  assert.ok(fuente.indexOf("decidirAcceso(") < fuente.indexOf("await fetch("), "la decisión va antes de llamar al gateway");
+  assert.doesNotMatch(fuente, /request\.headers\.get\(["']x-(rol|role)/i);   // el rol nunca viene de una cabecera del navegador
 });

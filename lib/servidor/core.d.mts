@@ -1,6 +1,9 @@
 export function mapearRol(role: unknown): "club" | "admin" | null;
 export function rutasPermitidas(path: string): boolean;
 export function rutaGateway(segments: string[]): string | null;
+export function metodosAdmin(path: string): string[] | null;
+export type RolSesion = "club" | "admin" | null | undefined;
+export function decidirAcceso(path: string, metodo: string, rol: RolSesion): { permitido: boolean; status: number };
 export function mensajeBackend(status: number, payload: unknown, fallback: string): string;
 export function mensajeLogin(status: number, payload: unknown): string;
 export function errorBff(payload: unknown, fallback: string): string;
