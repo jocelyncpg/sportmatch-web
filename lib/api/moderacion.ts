@@ -198,6 +198,8 @@ export function reportesPorUsuario(reportes: Reporte[]): { usuarioId: string; us
   const mapa = new Map<string, { usuarioId: string; usuarioNombre: string; total: number; pendientes: number }>();
   for (const r of reportes) {
     if (r.estado === "revisado") continue;
+    // Un reporte de una actividad o un mensaje cuyo autor no se pudo averiguar no tiene a quién nombrar aquí.
+    if (r.usuarioId === "") continue;
     const fila = mapa.get(r.usuarioId) ?? { usuarioId: r.usuarioId, usuarioNombre: r.usuarioNombre, total: 0, pendientes: 0 };
     fila.total += 1;
     if (r.estado === "pendiente") fila.pendientes += 1;
@@ -253,7 +255,7 @@ export async function aplicarSancion(d: DatosSancion, admin: string): Promise<Re
   if (sancionVigenteDe(estado.sanciones, d.usuarioId)) {
     return { ok: false, motivo: `${d.usuarioNombre} ya tiene una sanción vigente.` };
   }
-  // Un reporte de una actividad o de un mensaje no trae la cuenta de la persona: sin ese dato no hay a quién sancionar.
+  // Un reporte de una actividad o de un mensaje cuyo autor no se pudo averiguar no trae la cuenta: sin ese dato no hay a quién sancionar.
   if (!UUID.test(d.usuarioId)) return { ok: false, motivo: SIN_SOPORTE };
   const reporte = d.reporteId ? estado.reportes.find((x) => x.id === d.reporteId) : undefined;
   if (d.reporteId) {

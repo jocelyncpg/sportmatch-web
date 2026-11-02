@@ -111,6 +111,7 @@ const RUTAS_ADMIN = [
   ["GET", "users/admin/sanctions"], ["POST", "users/admin/sanctions"], ["GET", `users/admin/sanctions/${ID}`], ["POST", `users/admin/sanctions/${ID}/lift`],
   ["GET", "users/admin/audit-events"],
   ["GET", "payments/admin/plans"], ["POST", "payments/admin/plans"], ["PATCH", "payments/admin/plans/7"], ["POST", "payments/admin/plans/7/deactivate"],
+  ["POST", "payments/admin/plans/7/reactivate"], ["GET", "payments/admin/plans/7/subscriptions"],
 ];
 
 test("un administrador pasa por todas las rutas de administración con su método", () => {
@@ -138,17 +139,22 @@ test("sin sesión (o con un rol desconocido) tampoco pasa: 401 o 403", () => {
 test("en las rutas de administración solo valen los métodos que el panel necesita (405 aunque sea admin)", () => {
   for (const [metodo, ruta] of [["DELETE", "payments/admin/plans/7"], ["PUT", "payments/admin/plans/7"], ["DELETE", "payments/admin/plans"],
     ["POST", "users/admin/audit-events"], ["PATCH", "users/admin/audit-events"], ["DELETE", `users/admin/sanctions/${ID}`],
-    ["POST", `users/admin/reports/${ID}`], ["GET", "payments/admin/plans/7/deactivate"], ["PUT", "users/admin/sanctions"]]) {
+    ["POST", `users/admin/reports/${ID}`], ["GET", "payments/admin/plans/7/deactivate"], ["PUT", "users/admin/sanctions"],
+    ["GET", "payments/admin/plans/7/reactivate"], ["DELETE", "payments/admin/plans/7/reactivate"], ["POST", "payments/admin/plans/7/subscriptions"],
+    ["PUT", "payments/admin/plans/7/subscriptions"], ["DELETE", "payments/admin/plans/7/subscriptions"]]) {
     assert.deepEqual(decidirAcceso(ruta, metodo, "admin"), { permitido: false, status: 405 }, `${metodo} ${ruta}`);
   }
   assert.deepEqual(metodosAdmin("payments/admin/plans/7/deactivate"), ["POST"]);
+  assert.deepEqual(metodosAdmin("payments/admin/plans/7/reactivate"), ["POST"]);
+  assert.deepEqual(metodosAdmin("payments/admin/plans/7/subscriptions"), ["GET"]);
   assert.equal(metodosAdmin("payments/plans"), null);
 });
 
 test("no se abre nada fuera de lo pactado: ids mal formados, rutas vecinas y recorridos de carpeta", () => {
   for (const ruta of ["users/admin", "users/admin/", "users/admin/users", "users/admin/reports/no-es-uuid", `users/admin/reports/${ID}/otra`,
     "users/admin/sanctions/1", `users/admin/sanctions/${ID}/delete`, "users/admin/audit-events/1", "users/internal/x",
-    "payments/admin", "payments/admin/plans/abc", "payments/admin/plans/-1", "payments/admin/plans/1234567890", "payments/admin/plans/7/otra",
+    "payments/admin", "payments/admin/plans/abc", "payments/admin/plans/-1", "payments/admin/plans/1234567890", "payments/admin/plans/7/otra", "payments/admin/plans/abc/reactivate", "payments/admin/plans/abc/subscriptions",
+    "payments/admin/plans/7/reactivate/otra", "payments/admin/plans/7/subscriptions/x", "payments/admin/plans/../7/reactivate",
     "payments/admin/plans/../plans", "users/admin/../me", "users//admin/reports", "payments/admin\plans", "internal/v1/accounts/x/status",
     "users/admin/reportsx", "xusers/admin/reports"]) {
     for (const rol of ["admin", "club", null]) assert.equal(decidirAcceso(ruta, "GET", rol).permitido, false, `${rol} ${ruta}`);

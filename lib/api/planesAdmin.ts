@@ -1,5 +1,5 @@
 import { apiGw } from "./cliente";
-import { cuerpoDesactivacion, cuerpoPlanCambios, cuerpoPlanNuevo, queryPlanes } from "./admin.mjs";
+import { cuerpoDesactivacion, cuerpoPlanCambios, cuerpoPlanNuevo, cuerpoReactivacion, queryPlanes } from "./admin.mjs";
 import type { DatosPlan } from "./admin.mjs";
 
 // HU-56: planes y convenios (ms-club vía el BFF, /payments/admin/plans). Solo para administradores.
@@ -19,7 +19,8 @@ export type PlanAdmin = {
   descripcion: string | null;
   /** Pesos chilenos enteros. 0 = gratuito (no se paga con Webpay). */
   precio: number;
-  duracion_dias: number;
+  /** null = sin vencimiento (solo un plan gratis). */
+  duracion_dias: number | null;
   beneficios: string[];
   /** Solo un convenio la tiene: con quién se firmó. */
   institucion: string | null;
@@ -27,6 +28,11 @@ export type PlanAdmin = {
   /** Suscripciones cuya vigencia no termina y cuyo último pago fue de este plan. */
   suscripciones_vigentes: number;
   fecha_creacion: string | null;
+  /** El plan base no se puede desactivar. */
+  es_base: boolean;
+  /** Cuándo y por qué se retiró del catálogo (null mientras está activo). */
+  fecha_desactivacion: string | null;
+  motivo_desactivacion: string | null;
 };
 
 export type PaginaPlanes = { items: PlanAdmin[]; pagina: number; limit: number; total: number };
@@ -65,4 +71,33 @@ export function desactivarPlan(id: number, motivo?: string): Promise<PlanAdmin> 
   return apiGw<PlanAdmin>(`payments/admin/plans/${encodeURIComponent(String(id))}/deactivate`, {
     method: "POST", body: cuerpoDesactivacion(motivo),
   });
+}
+
+/** 409 si ya hay un plan activo con ese nombre o si ya estaba activo; 503 si no se pudo registrar la auditoría. */
+export function reactivarPlan(id: number, motivo?: string): Promise<PlanAdmin> {
+  return apiGw<PlanAdmin>(`payments/admin/plans/${encodeURIComponent(String(id))}/reactivate`, {
+    method: "POST", body: cuerpoReactivacion(motivo),
+  });
+}
+
+/** Una suscripción cuyo último pago fue de un plan. `suscriptor` es un nombre corto o el del club; null si no está disponible. */
+export type SuscripcionPlan = {
+  id: string;
+  suscriptor: string | null;
+  tipo_suscriptor: "USUARIO" | "CLUB";
+  estado: "ACTIVE" | "EXPIRED";
+  /** Nombre del plan y precio al contratar: un cambio posterior no los altera. */
+  plan_nombre: string;
+  precio_pagado: number;
+  fecha_inicio: string;
+  fecha_fin: string;
+};
+export type PaginaSuscripciones = { items: SuscripcionPlan[]; pagina: number; limit: number; total: number };
+export const LIMITE_SUSCRIPCIONES = 100;
+
+/** Las vigentes primero y luego las que terminaron más tarde. */
+export function listarSuscripcionesPlan(id: number, pagina = 1): Promise<PaginaSuscripciones> {
+  return apiGw<PaginaSuscripciones>(
+    `payments/admin/plans/${encodeURIComponent(String(id))}/subscriptions?estado=todas&pagina=${pagina}&limit=${LIMITE_SUSCRIPCIONES}`,
+  );
 }

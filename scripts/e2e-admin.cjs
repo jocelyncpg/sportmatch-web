@@ -140,6 +140,11 @@ const mensaje = (page, texto) => page.getByText(texto, { exact: false });
     await page.getByRole("button", { name: "Confirmar" }).click();
     await page.getByRole("button", { name: "Revisados", exact: true }).click();
     check("reportes: marcar como revisado -> pasa a Revisados", await visible(mensaje(page, CTX.b.nombre)));
+    const tarjetaB = card(page, CTX.b.nombre, "Revisado");
+    const textoB = await page.locator("div.rounded-2xl").filter({ hasText: CTX.b.nombre }).last().innerText();
+    check("reportes: la tarjeta dice quién lo revisó (el administrador real) y su nota, no un texto fijo",
+      /Revisado por Ada W\./.test(textoB) && textoB.includes("Se revisó y no hay sanción") && !/un administrador/.test(textoB), textoB.replace(/\s+/g, " ").slice(0, 160));
+    void tarjetaB;
     await shot(page, "reportes-revisado");
     await page.getByRole("button", { name: "Pendientes", exact: true }).click();
     // D: escalar a sanción (temporal, 7 días)
@@ -151,15 +156,66 @@ const mensaje = (page, texto) => page.getByText(texto, { exact: false });
     await shot(page, "reportes-escalado-sancionado");
     await page.getByRole("button", { name: "Escalados", exact: true }).click();
     check("reportes: el reporte quedó en Escalados", await visible(mensaje(page, CTX.d.nombre)));
+    // Reportes de una actividad y de un mensaje del chat: traen la cuenta de quien los hizo.
+    const todos = (await bff(page, "GET", "users/admin/reports?estado=todos&limit=100")).json;
+    const repAct = todos.find((r) => r.tipo === "actividad" && r.objetivo_nombre === CTX.actividad);
+    const repMsg = todos.find((r) => r.tipo === "mensaje" && r.reportado && r.reportado.user_id === CTX.f.id);
+    const repFantasma = todos.find((r) => r.objetivo_nombre === CTX.fantasma);
+    check("reportes: el reporte de la actividad trae a la cuenta que la publicó (Ms_Activities)", repAct && repAct.reportado && repAct.reportado.user_id === CTX.e.id && repAct.autor_no_disponible === false);
+    check("reportes: el reporte del mensaje trae a la cuenta que lo escribió (Ms_Matching)", !!repMsg && repMsg.autor_no_disponible === false);
+    check("reportes: una actividad que ya no existe sale sin autor y marcada, sin inventar datos", repFantasma && repFantasma.reportado === null && repFantasma.autor_no_disponible === true);
+    check("reportes: el autor solo trae nombre corto (sin correo ni RUT)", !JSON.stringify([repAct, repMsg]).match(/@|rut/i));
+    await page.goto(`${WEB}/reportes`);
+    check("reportes: la actividad se muestra con el nombre real del autor", await visible(card(page, CTX.e.nombre, "Escalar a sanción").getByText(CTX.actividad)));
+    await shot(page, "reportes-actividad-mensaje");
+    // Sancionar desde la actividad (temporal) y desde el mensaje (definitiva)
+    await card(page, CTX.e.nombre, "Escalar a sanción").getByRole("button", { name: "Escalar a sanción" }).click();
+    await page.locator("textarea").last().fill("Actividad engañosa reiterada");
+    await page.getByRole("button", { name: "Aplicar suspensión" }).click();
+    check("reportes: sancionar desde una actividad -> aviso con motivo y duración", await visible(mensaje(page, "su cuenta quedó suspendida (7 días)")));
+    const loginE = await gw("POST", "users/auth/login", { email: CTX.e.email, password: PW });
+    check("reportes: la cuenta que publicó la actividad queda suspendida (403 account_suspended)", loginE.status === 403 && loginE.json?.code === "account_suspended", loginE.status);
+    await page.goto(`${WEB}/reportes`);
+    await card(page, CTX.f.nombre, "Escalar a sanción").getByRole("button", { name: "Escalar a sanción" }).click();
+    await page.getByRole("button", { name: "Definitiva", exact: true }).click();
+    await page.locator("textarea").last().fill("Mensaje ofensivo comprobado");
+    await page.getByRole("button", { name: "Aplicar suspensión" }).click();
+    check("reportes: sancionar desde un mensaje (definitiva) -> aviso", await visible(mensaje(page, "su cuenta quedó suspendida (definitiva)")));
+    const loginF = await gw("POST", "users/auth/login", { email: CTX.f.email, password: PW });
+    check("reportes: la cuenta que escribió el mensaje queda suspendida", loginF.status === 403 && loginF.json?.code === "account_suspended", loginF.status);
+    const tras = (await bff(page, "GET", "users/admin/reports?estado=escalado&limit=100")).json;
+    check("reportes: los dos reportes quedaron escalados con el administrador real como actor",
+      [CTX.actividad, null].every((n) => n === null || tras.some((r) => r.objetivo_nombre === n && r.estado === "escalado" && r.revisado_por && r.motivo_revision)) && tras.filter((r) => [repAct.id, repMsg.id].includes(r.id)).length === 2);
+    // Sin autor conocido: la pantalla no inventa a nadie, usa el aviso que ya tiene
+    await page.goto(`${WEB}/reportes`);
+    await card(page, CTX.fantasma, "Escalar a sanción").getByRole("button", { name: "Escalar a sanción" }).click();
+    await page.locator("textarea").last().fill("Intento sin autor conocido");
+    await page.getByRole("button", { name: "Aplicar suspensión" }).click();
+    check("reportes: sin autor conocido -> 'Esta función aún no está disponible' y el reporte sigue pendiente",
+      await visible(mensaje(page, "Esta función aún no está disponible"))
+      && (await bff(page, "GET", "users/admin/reports?estado=pendiente&limit=100")).json.some((r) => r.objetivo_nombre === CTX.fantasma));
+    await shot(page, "reportes-sin-autor");
+    await page.getByRole("button", { name: "Cancelar" }).last().click();
+    await page.goto(`${WEB}/reportes`);
     // 409 del backend: transición inválida
     const lista = (await bff(page, "GET", "users/admin/reports?estado=todos&limit=100")).json;
     const repD = lista.find((r) => r.objetivo_id === CTX.d.id);
     const invalida = await bff(page, "PATCH", `users/admin/reports/${repD.id}`, { estado: "revisado" });
     check("reportes: transición inválida en el backend -> 409 con mensaje claro", invalida.status === 409 && typeof invalida.json?.error === "string", `${invalida.status} ${invalida.json?.error}`);
 
+    const pend = (await bff(page, "GET", "users/admin/reports?limit=100")).json;
+    const sobre = await bff(page, "GET", "users/admin/reports?limit=101");
+    const pag1 = (await bff(page, "GET", "users/admin/reports?estado=todos&limit=100&pagina=1")).json;
+    const pag2 = (await bff(page, "GET", "users/admin/reports?estado=todos&limit=100&pagina=2")).json;
+    check("reportes: el listado por defecto trae solo pendientes y el límite máximo es 100 (101 -> rechazado)",
+      pend.length <= 100 && pend.every((r) => r.estado === "pendiente") && [400, 422].includes(sobre.status), `${pend.length} pendientes, límite 101 -> ${sobre.status}`);
+    check("reportes: con la base de QA (más de 100 reportes) el listado pagina sin repetir ni perder",
+      pag1.length === 100 && Array.isArray(pag2) && pag2.length >= 1 && new Set([...pag1, ...pag2].map((r) => r.id)).size === pag1.length + pag2.length, `${pag1.length} + ${pag2.length}`);
+
     // ---------------------------------------------------------------- 3. sanciones
     console.log("== 3. Sanciones");
     await page.goto(`${WEB}/sanciones`);
+    check("sanciones: un reporte sin autor conocido no aparece como una persona", !(await page.getByText(CTX.fantasma).count()));
     check("sanciones: 'Personas con reportes' ofrece Suspender", await visible(card(page, CTX.c.nombre, "Suspender").getByRole("button", { name: "Suspender", exact: true })));
     check("sanciones: D figura como suspendida (7 días) y en Suspensiones vigentes", await visible(mensaje(page, "Suspendida (7 días)")) && await visible(card(page, CTX.d.nombre, "Levantar suspensión")));
     await shot(page, "sanciones-vigentes-d");
@@ -230,6 +286,18 @@ const mensaje = (page, texto) => page.getByText(texto, { exact: false });
     await page.locator("textarea").last().fill("Cupos para el club");
     await page.getByRole("button", { name: "Crear", exact: true }).click();
     check("planes: crear convenio -> aparece", await visible(mensaje(page, nombreConv)));
+    // Suscripciones por persona: se deja una suscripción pagada del deportista desechable en la base aislada.
+    const idPlan = (await bff(page, "GET", "payments/admin/plans?estado=activo&limit=50")).json.items.find((x) => x.nombre === nombrePlan).id;
+    const sqlSuscripcion = `WITH t AS (INSERT INTO transaccion_pago (usuario_id, iniciada_por, plan_id, buy_order, session_id, token_ws, amount, status, plan_nombre, duracion_dias, beneficios)
+      VALUES ('${CTX.player.id}', '${CTX.player.id}', ${idPlan}, 'HUW${CTX.tag}', 'HUWse${CTX.tag}', '${"a".repeat(64)}', 4990, 'APPROVED', '${nombrePlan}', 30, '[]'::jsonb) RETURNING id)
+      INSERT INTO suscripcion (usuario_id, plan_id, fecha_inicio, fecha_fin, ultima_transaccion_id, plan_nombre, precio_pagado, duracion_dias, beneficios)
+      SELECT '${CTX.player.id}', ${idPlan}, now() - interval '3 days', now() + interval '27 days', id, '${nombrePlan}', 4990, 30, '[]'::jsonb FROM t;`;
+    execSync("docker exec -i sportmatch-backend-postgres-1 psql -U postgres -d sportmatch_clubs -v ON_ERROR_STOP=1 -q", { input: sqlSuscripcion, stdio: ["pipe", "ignore", "inherit"] });
+    await page.goto(`${WEB}/planes`);
+    check("planes: la tabla de suscripciones por persona muestra a la persona, el plan y el precio pagado",
+      await visible(page.locator("tbody").getByText("Pablo J.")) && (await page.locator("tbody tr").filter({ hasText: "Pablo J." }).innerText()).includes("$4.990"));
+    check("planes: la tarjeta cuenta la suscripción vigente", await visible(card(page, nombrePlan, "Editar").getByText("1 suscripción vigente")));
+    await shot(page, "planes-suscripciones");
     // validación del formulario de siempre
     await page.getByRole("button", { name: "Nuevo plan o convenio" }).click();
     await page.getByPlaceholder("Ej: Pro Anual").fill(`HUW Malo ${CTX.tag}`);
@@ -264,12 +332,34 @@ const mensaje = (page, texto) => page.getByText(texto, { exact: false });
     check("planes: desactivar -> 'ya no aparece en el catálogo'", await visible(mensaje(page, "ya no aparece en el catálogo")));
     await page.getByRole("button", { name: "Desactivados", exact: true }).click();
     check("planes: aparece en 'Desactivados' con el botón Reactivar visible", await visible(mensaje(page, nombreConv)) && await visible(card(page, nombreConv, "Reactivar").getByRole("button", { name: "Reactivar" })));
+    check("planes: la tarjeta desactivada muestra la fecha y el motivo reales", await visible(card(page, nombreConv, "Reactivar").getByText("Desactivado el")) && await visible(card(page, nombreConv, "Reactivar").getByText("Se terminó el convenio")));
+    // Otro convenio activo toma el nombre: reactivar el viejo se rechaza con el motivo del backend.
+    const bloqueo = await bff(page, "POST", "payments/admin/plans", { nombre: nombreConv, tipo: "CLUB", categoria: "CONVENIO", precio: 100, duracion_dias: 30, beneficios: [] });
+    check("planes: otro plan activo puede tomar el nombre de uno desactivado", bloqueo.status === 201, bloqueo.status);
+    await page.goto(`${WEB}/planes`);
+    await page.getByRole("button", { name: "Desactivados", exact: true }).click();
     await card(page, nombreConv, "Reactivar").getByRole("button", { name: "Reactivar" }).click();
-    check("planes: Reactivar no tiene respaldo en el backend -> 'Esta función aún no está disponible'", await visible(mensaje(page, "Esta función aún no está disponible")));
-    await shot(page, "planes-desactivado");
+    check("planes: reactivar con el nombre ya tomado -> el aviso trae el motivo del backend (409)", await visible(mensaje(page, "ya existe un plan activo con ese nombre")));
+    await shot(page, "planes-reactivar-409");
+    await bff(page, "PATCH", `payments/admin/plans/${bloqueo.json.id}`, { nombre: `HUW Otro ${CTX.tag}` });
+    await page.goto(`${WEB}/planes`);
+    await page.getByRole("button", { name: "Desactivados", exact: true }).click();
+    await card(page, nombreConv, "Reactivar").getByRole("button", { name: "Reactivar" }).click();
+    check("planes: reactivar con el nombre libre -> 'vuelve a mostrarse en el catálogo'", await visible(mensaje(page, "vuelve a mostrarse en el catálogo")));
+    await shot(page, "planes-reactivado");
+    const cat3 = await bff(page, "GET", "payments/plans?tipo=CLUB");
+    check("planes: el convenio reactivado está otra vez en el catálogo público", Array.isArray(cat3.json) && cat3.json.some((p) => p.nombre === nombreConv));
+    const idConv0 = (await bff(page, "GET", "payments/admin/plans?estado=activo&limit=50")).json.items.find((x) => x.nombre === nombreConv);
+    check("planes: al reactivar se borran la fecha y el motivo de desactivación", idConv0 && idConv0.fecha_desactivacion === null && idConv0.motivo_desactivacion === null);
+    const yaActivo = await bff(page, "POST", `payments/admin/plans/${idConv0.id}/reactivate`, {});
+    check("planes: reactivar uno activo -> 409", yaActivo.status === 409, yaActivo.status);
+    const auditPlan = (await bff(page, "GET", "users/admin/audit-events?accion=PLAN_REACTIVATED&por_pagina=10")).json;
+    check("planes: la reactivación quedó en la auditoría", auditPlan.items && auditPlan.items.some((e) => e.accion === "PLAN_REACTIVATED"));
+    // Se vuelve a desactivar para seguir con la prueba del catálogo.
+    await bff(page, "POST", `payments/admin/plans/${idConv0.id}/deactivate`, { motivo: "Se terminó el convenio" });
     const cat2 = await bff(page, "GET", "payments/plans?tipo=CLUB");
     check("planes: el convenio desactivado ya no está en el catálogo público", Array.isArray(cat2.json) && !cat2.json.some((p) => p.nombre === nombreConv));
-    const idConv = (await bff(page, "GET", "payments/admin/plans?estado=inactivo&limit=50")).json.items.find((p) => p.nombre === nombreConv).id;
+    const idConv = idConv0.id;
     const otraVez = await bff(page, "POST", `payments/admin/plans/${idConv}/deactivate`, {});
     check("planes: desactivar de nuevo -> 409", otraVez.status === 409, otraVez.status);
     const noDelete = await bff(page, "DELETE", "payments/admin/plans/1");

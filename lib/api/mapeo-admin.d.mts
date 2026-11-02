@@ -1,6 +1,6 @@
 import type { AccionAdmin, RegistroAuditoria, Reporte, Sancion, TipoSancion } from "./moderacion";
-import type { DatosOferta, Oferta, TipoOferta, Audiencia } from "./ofertas";
-import type { PlanAdmin } from "./planesAdmin";
+import type { DatosOferta, Oferta, Suscripcion, TipoOferta, Audiencia } from "./ofertas";
+import type { PlanAdmin, SuscripcionPlan } from "./planesAdmin";
 import type { ReporteAdmin } from "./reportes";
 import type { Sancion as SancionApi } from "./sanciones";
 import type { EventoAuditoria } from "./auditoria";
@@ -13,6 +13,7 @@ export const ACCION_UI: Record<string, AccionAdmin>;
 export function resumenDeAccion(e: Pick<EventoAuditoria, "accion" | "detalle">): string;
 export function registroDesdeApi(e: EventoAuditoria): RegistroAuditoria;
 export function ofertaDesdeApi(p: PlanAdmin): Oferta;
+export function suscripcionDesdeApi(s: SuscripcionPlan, ofertaId: number | string): Suscripcion;
 export function audienciaAlBackend(audiencia: Audiencia): "USUARIO" | "CLUB";
 export function tipoOfertaAlBackend(tipo: TipoOferta): "PLAN" | "CONVENIO";
 export function limpiarOferta(d: DatosOferta): DatosOferta;

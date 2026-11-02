@@ -2,12 +2,13 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync, readdirSync } from "node:fs";
 import {
-  ETIQUETA_ACCION, cuerpoDesactivacion, cuerpoLevantamiento, cuerpoPlanCambios, cuerpoPlanNuevo, cuerpoRevision, cuerpoSancion,
+  ETIQUETA_ACCION, cuerpoReactivacion, cuerpoDesactivacion, cuerpoLevantamiento, cuerpoPlanCambios, cuerpoPlanNuevo, cuerpoRevision, cuerpoSancion,
   duracionTexto, etiquetaAccion, etiquetaRecurso, fechaAIso, formatearCLP, hayMasPaginas, motivoOpcional, nombreCorto,
   queryAuditoria, queryPlanes, queryReportes, querySanciones, separarBeneficios, textoPrecio, TRANSICIONES,
 } from "../lib/api/admin.mjs";
 import {
-  SIN_SOPORTE, limpiarOferta, ofertaDesdeApi, registroDesdeApi, reporteDesdeApi, sancionDesdeApi, tipoSancionAlBackend, validarOferta,
+  SIN_SOPORTE, limpiarOferta, ofertaDesdeApi, registroDesdeApi, reporteDesdeApi, sancionDesdeApi, suscripcionDesdeApi, tipoSancionAlBackend,
+  validarOferta,
 } from "../lib/api/mapeo-admin.mjs";
 
 const ID = "3f2a9c1e-5b7d-4e8a-9c21-7d4e5f6a8b90";
@@ -134,7 +135,7 @@ test("formato de precio, duración y beneficios", () => {
 });
 
 test("la auditoría muestra etiquetas legibles para todas las acciones del catálogo y nunca el código crudo", () => {
-  assert.equal(Object.keys(ETIQUETA_ACCION).length, 12);
+  assert.equal(Object.keys(ETIQUETA_ACCION).length, 13);
   for (const accion of Object.keys(ETIQUETA_ACCION)) assert.doesNotMatch(etiquetaAccion(accion), /^[A-Z_]+$/);
   assert.equal(etiquetaAccion("PLAN_UPDATED"), "Plan o convenio editado");
   assert.equal(etiquetaAccion("ACCION_NUEVA"), "Acción administrativa");
@@ -219,7 +220,9 @@ test("planes: categoria y tipo del backend se traducen a plan/convenio y deporti
   const p = { id: 7, nombre: "Pro", tipo: "CLUB", categoria: "CONVENIO", institucion: "DuocUC", descripcion: null, precio: 0, duracion_dias: 30,
     beneficios: ["Uno"], is_active: false, suscripciones_vigentes: 3, fecha_creacion: "2026-11-01T00:00:00Z" };
   const o = ofertaDesdeApi(p);
-  assert.deepEqual([o.id, o.tipo, o.audiencia, o.institucion, o.activa, o.vigentes, o.base], ["7", "convenio", "club", "DuocUC", false, 3, undefined]);
+  assert.deepEqual([o.id, o.tipo, o.audiencia, o.institucion, o.activa, o.base, o.desactivadaEn, o.motivoDesactivacion], ["7", "convenio", "club", "DuocUC", false, undefined, undefined, undefined]);
+  const retirado = ofertaDesdeApi({ ...p, es_base: true, fecha_desactivacion: "2026-11-02T10:00:00Z", motivo_desactivacion: "Fin del convenio" });
+  assert.deepEqual([retirado.base, retirado.desactivadaEn, retirado.motivoDesactivacion], [true, "2026-11-02T10:00:00Z", "Fin del convenio"]);
   assert.equal(ofertaDesdeApi({ ...p, categoria: "PLAN", tipo: "USUARIO" }).institucion, undefined);
   const d = limpiarOferta({ tipo: "plan", audiencia: "club", nombre: " Pro ", institucion: "", descripcion: "", precio: 1000, duracionDias: 30, beneficios: [" a ", "a", ""] });
   assert.deepEqual(d.beneficios, ["a"]);
@@ -227,4 +230,46 @@ test("planes: categoria y tipo del backend se traducen a plan/convenio y deporti
   assert.equal(validarOferta({ ...d, nombre: "ab" }), "El nombre debe tener entre 3 y 60 letras.");
   assert.equal(validarOferta({ ...d, tipo: "convenio" }), "Indica la institución del convenio (entre 3 y 80 letras).");
   assert.equal(validarOferta({ ...d, precio: 5, duracionDias: null }), "Un plan de pago necesita una duración (entre 1 y 365 días).");
+});
+
+test("planes: una suscripción del backend se muestra con el nombre al contratar, el precio pagado y las fechas", () => {
+  const s = { id: "s1", suscriptor: "Ana T.", tipo_suscriptor: "USUARIO", estado: "ACTIVE", plan_nombre: "Pro Mensual", precio_pagado: 4990,
+    fecha_inicio: "2026-11-01T00:00:00Z", fecha_fin: "2026-12-01T00:00:00Z" };
+  assert.deepEqual(suscripcionDesdeApi(s, 7), { id: "s1", ofertaId: "7", ofertaNombre: "Pro Mensual", suscriptor: "Ana T.", precioPagado: 4990,
+    inicio: "2026-11-01T00:00:00Z", fin: "2026-12-01T00:00:00Z" });
+  assert.equal(suscripcionDesdeApi({ ...s, suscriptor: null }, 7).suscriptor, "Cuenta eliminada");
+});
+
+test("auditoría: reactivar un plan cae en la etiqueta 'oferta_reactivada' del diseño", () => {
+  const e = registroDesdeApi({ id: "a", fecha: "2026-11-02T10:00:00Z", accion: "PLAN_REACTIVATED", admin: { nombre: "Admin" }, recurso_tipo: "plan",
+    recurso_id: "7", afectado: null, motivo: "Vuelve la oferta", detalle: { categoria: "CONVENIO" } });
+  assert.deepEqual([e.accion, e.resumen, etiquetaAccion("PLAN_REACTIVATED")], ["oferta_reactivada", "Convenio vuelve al catálogo", "Plan o convenio reactivado"]);
+});
+
+test("planes: sin duración (sin vencimiento) vale solo si el plan es gratis, también al armar lo que se envía", () => {
+  const base = { tipo: "USUARIO", nombre: "Gratis siempre", precio: 0, duracionDias: null, beneficios: ["Chat con tus matches"] };
+  assert.equal(cuerpoPlanNuevo(base).duracion_dias, null);
+  assert.throws(() => cuerpoPlanNuevo({ ...base, precio: 4990 }), /necesita una duración/);
+  assert.equal(validarOferta({ tipo: "plan", audiencia: "deportista", nombre: "Gratis siempre", institucion: "", descripcion: "", precio: 0, duracionDias: null, beneficios: ["Uno"] }), null);
+  const original = { nombre: "Gratis siempre", descripcion: null, precio: 0, duracion_dias: null, beneficios: ["Chat con tus matches"], categoria: "PLAN" };
+  assert.deepEqual(cuerpoPlanCambios(original, { ...base, duracionDias: 30 }), { duracion_dias: 30 });
+  assert.deepEqual(cuerpoReactivacion(), {});
+  assert.deepEqual(cuerpoReactivacion(" Vuelve la oferta "), { motivo: "Vuelve la oferta" });
+});
+
+test("reportes: quién lo resolvió y la nota vienen del backend, y un reporte de actividad o mensaje trae la cuenta del autor", () => {
+  const base = { id: "r1", tipo: "actividad", objetivo_id: ID, objetivo_nombre: "Running en el parque", reportado: { user_id: ID, nombre: "Beto", apellido_inicial: "T." },
+    autor_no_disponible: false, reportante: { nombre: "Luis", apellido_inicial: "P" }, motivo: "Spam o publicidad", detalle: "", fecha_creacion: "2026-11-02T10:00:00Z",
+    estado: "pendiente", fecha_revision: null, revisado_por: null, motivo_revision: null };
+  const pendiente = reporteDesdeApi(base);
+  assert.deepEqual([pendiente.usuarioId, pendiente.usuarioNombre, pendiente.referencia], [ID, "Beto T.", "Running en el parque"]);
+  assert.deepEqual([pendiente.resueltoPor, pendiente.resueltoEn, pendiente.nota], [undefined, undefined, undefined]);
+  const resuelto = reporteDesdeApi({ ...base, tipo: "mensaje", estado: "revisado", fecha_revision: "2026-11-02T11:00:00Z",
+    revisado_por: { user_id: ID, nombre: "Ada", apellido_inicial: "W." }, motivo_revision: "Se revisó y no hay falta" });
+  assert.deepEqual([resuelto.resueltoPor, resuelto.resueltoEn, resuelto.nota, resuelto.estado], ["Ada W.", "2026-11-02T11:00:00Z", "Se revisó y no hay falta", "revisado"]);
+  // Quien lo resolvió ya no existe: se dice como en el resto de la web, nunca "un administrador" inventado.
+  assert.equal(reporteDesdeApi({ ...base, estado: "escalado", fecha_revision: "2026-11-02T11:00:00Z" }).resueltoPor, "Cuenta eliminada");
+  // Sin autor conocido no se inventa a quién sancionar: el reporte queda sin cuenta (la pantalla muestra el aviso neutro).
+  const sinAutor = reporteDesdeApi({ ...base, reportado: null, autor_no_disponible: true });
+  assert.deepEqual([sinAutor.usuarioId, sinAutor.usuarioNombre], ["", "Running en el parque"]);
 });

@@ -25,7 +25,9 @@ import {
   formatearCLP,
   precioTexto,
   reactivarOferta,
+  ultimoVencimiento,
   usePlanes,
+  vigentesDe,
   type Audiencia,
   type Oferta,
 } from "@/lib/api/ofertas";
@@ -81,8 +83,7 @@ function Contenido() {
     );
 
   const activas = ofertas.filter((o) => o.activa).length;
-  // El backend informa cuántas suscripciones vigentes tiene cada plan, no quiénes son.
-  const vigentesTotal = ofertas.reduce((total, o) => total + o.vigentes, 0);
+  const vigentesTotal = suscripciones.filter((s) => estaVigente(s)).length;
 
   function abrir(id: string, modo: "editar" | "desactivar") {
     setAbierto({ id, modo });
@@ -102,8 +103,8 @@ function Contenido() {
     setMensaje(r.aviso);
   }
 
-  function reactivar(id: string) {
-    const r = reactivarOferta(id, sesion.email);
+  async function reactivar(id: string) {
+    const r = await reactivarOferta(id, sesion.email);
     setMensaje(r.ok ? r.aviso : r.motivo);
   }
 
@@ -176,6 +177,7 @@ function Contenido() {
             <TarjetaOferta
               key={o.id}
               oferta={o}
+              suscripciones={suscripciones}
               panel={abierto?.id === o.id ? abierto.modo : null}
               admin={sesion.email}
               motivo={motivo}
@@ -276,6 +278,7 @@ function Contenido() {
 
 function TarjetaOferta({
   oferta: o,
+  suscripciones,
   panel,
   admin,
   motivo,
@@ -289,6 +292,7 @@ function TarjetaOferta({
   onListo,
 }: {
   oferta: Oferta;
+  suscripciones: ReturnType<typeof usePlanes>["suscripciones"];
   panel: "editar" | "desactivar" | null;
   admin: string;
   motivo: string;
@@ -301,8 +305,8 @@ function TarjetaOferta({
   onCerrar: () => void;
   onListo: (aviso: string) => void;
 }) {
-  const vigentes = { length: o.vigentes }; // el backend informa cuántas, no quiénes
-  const hasta: string | null = null;
+  const vigentes = vigentesDe(suscripciones, o.id);
+  const hasta = ultimoVencimiento(vigentes);
 
   return (
     <Card className={o.activa ? "" : "opacity-90"}>

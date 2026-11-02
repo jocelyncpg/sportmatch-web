@@ -49,11 +49,12 @@ export function separarBeneficios(texto: string): string[];
 
 export type DatosPlan = {
   nombre: string; tipo: "USUARIO" | "CLUB"; categoria?: "PLAN" | "CONVENIO"; descripcion?: string | null; institucion?: string | null;
-  precio: number; duracionDias: number; beneficios?: string[]; motivo?: string;
+  precio: number; duracionDias: number | null; beneficios?: string[]; motivo?: string;
 };
 export function cuerpoPlanNuevo(datos: DatosPlan): Record<string, unknown>;
 export function cuerpoPlanCambios(
-  original: { nombre: string; descripcion: string | null; precio: number; duracion_dias: number; beneficios: string[]; categoria: string; institucion?: string | null },
+  original: { nombre: string; descripcion: string | null; precio: number; duracion_dias: number | null; beneficios: string[]; categoria: string; institucion?: string | null },
   datos: DatosPlan,
 ): Record<string, unknown>;
+export function cuerpoReactivacion(motivo?: string): { motivo?: string };
 export function cuerpoDesactivacion(motivo?: string): { motivo?: string };
