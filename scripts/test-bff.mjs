@@ -181,3 +181,35 @@ test("el manejador de /api/gw decide el acceso con el rol de la cookie firmada d
   assert.ok(fuente.indexOf("decidirAcceso(") < fuente.indexOf("await fetch("), "la decisión va antes de llamar al gateway");
   assert.doesNotMatch(fuente, /request\.headers\.get\(["']x-(rol|role)/i);   // el rol nunca viene de una cabecera del navegador
 });
+
+// HU-61: la foto de perfil de un postulante se pide a través del BFF, solo con GET y solo con una clave válida.
+import { fotoWeb } from "../lib/datos-mapeo.mjs";
+
+test("la foto de perfil pasa por el BFF solo para claves generadas por Ms_Users", () => {
+  const clave = "0123456789abcdef0123456789abcdef";
+  assert.equal(rutasPermitidas(`users/photos/${clave}.jpg`), true);
+  assert.equal(rutasPermitidas(`users/photos/${clave}.png`), true);
+  for (const mala of [`users/photos/${clave}.html`, "users/photos/../admin/audit-events", "users/photos/x.jpg", "users/photos", "users/photos/"]) {
+    assert.equal(rutasPermitidas(mala), false, mala);
+  }
+  assert.equal(decidirAcceso(`users/photos/${clave}.jpg`, "GET", "club").permitido, true);
+  assert.equal(rutaGateway(["users", "photos", `${clave}.jpg`]), `users/photos/${clave}.jpg`);
+});
+
+test("fotoWeb convierte la ruta del servidor en una ruta del propio sitio y descarta lo demás", () => {
+  const clave = "0123456789abcdef0123456789abcdef.jpg";
+  assert.equal(fotoWeb(`/api/v1/users/photos/${clave}`), `/api/gw/users/photos/${clave}`);
+  for (const valor of [null, undefined, "", "file:///x.jpg", "http://evil.example/a.png", "/api/v1/users/photos/../../x.jpg", "javascript:alert(1)"]) {
+    assert.equal(fotoWeb(valor), "", String(valor));
+  }
+});
+
+// HU-68: editar una convocatoria (PATCH) pasa por el BFF con cualquier sesión de club, como publicar o cerrar.
+test("el BFF deja pasar la edición de una convocatoria y no abre rutas vecinas", () => {
+  const club = "10000000-0000-4000-8000-000000000002";
+  const call = "10000000-0000-4000-8000-000000000003";
+  assert.equal(rutasPermitidas(`clubs/${club}/announcements/${call}`), true);
+  assert.equal(decidirAcceso(`clubs/${club}/announcements/${call}`, "PATCH", "club").permitido, true);
+  assert.equal(rutaGateway(["clubs", club, "announcements", call]), `clubs/${club}/announcements/${call}`);
+  assert.equal(rutasPermitidas(`clubs/${club}/announcements/../${call}`), false);
+});
