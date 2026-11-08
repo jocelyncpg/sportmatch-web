@@ -18,6 +18,9 @@ async function proxy(request: Request, context: Contexto) {
   if (path === "users/reports" && method !== "POST") {
     return NextResponse.json({ error: "Método no permitido." }, { status: 405 });
   }
+  if (path.startsWith("users/photos/") && method !== "GET") {
+    return NextResponse.json({ error: "Método no permitido." }, { status: 405 });
+  }
   // Las rutas de administración (users/admin/*, payments/admin/*) solo pasan con una sesión de administrador. El
   // rol sale de la cookie firmada que emite este servidor, nunca de algo que mande el navegador; quien no es admin
   // recibe 403 sin que la petición llegue al gateway.
@@ -120,6 +123,7 @@ async function proxy(request: Request, context: Contexto) {
       headers: {
         "content-type": upstream.headers.get("content-type") || "application/json",
         "cache-control": "no-store",
+        "x-content-type-options": "nosniff",
       },
     });
   } catch {

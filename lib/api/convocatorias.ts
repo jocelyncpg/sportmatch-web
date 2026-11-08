@@ -47,6 +47,15 @@ export interface ConvocatoriaCreate {
   chat_postulantes_habilitado?: boolean;
 }
 
+/** HU-68: solo lo que cambia; `null` borra edades, comuna, título o descripción. */
+export type ConvocatoriaUpdate = Partial<Omit<ConvocatoriaCreate, "edad_minima" | "edad_maxima" | "comuna" | "titulo" | "descripcion">> & {
+  edad_minima?: number | null;
+  edad_maxima?: number | null;
+  comuna?: string | null;
+  titulo?: string | null;
+  descripcion?: string | null;
+};
+
 export interface ConvocatoriaFilters {
   deporte?: string;
   deporte_id?: number;
@@ -122,6 +131,40 @@ export async function publicarConvocatoria(clubId: string, datos: ConvocatoriaCr
     validarTexto(datos.comuna, "La comuna", 2, 80);
   }
   return apiGw(`clubs/${encodeURIComponent(clubId)}/announcements`, { method: "POST", body: datos });
+}
+
+/**
+ * El club dueño edita su convocatoria (PATCH clubs/{club}/announcements/{id}). Si cambian la fecha, el lugar, los
+ * requisitos o el deporte, el backend avisa a los postulantes que no están rechazados. Las mismas validaciones que al
+ * publicar; el backend vuelve a validar y responde 409 si está cerrada o finalizada, o si los cupos quedan por
+ * debajo de los aceptados.
+ */
+export async function editarConvocatoria(clubId: string, id: string, cambios: ConvocatoriaUpdate): Promise<Convocatoria> {
+  if (!Object.keys(cambios).length) throw new Error("Indica al menos un dato para modificar.");
+  if (cambios.categoria_edad != null) validarTexto(cambios.categoria_edad, "La categoría", 2, 40);
+  if (cambios.direccion != null) validarTexto(cambios.direccion, "La dirección", 5, 255);
+  if (cambios.titulo) validarTexto(cambios.titulo, "El título", 3, 120);
+  if (cambios.descripcion) validarTexto(cambios.descripcion, "La descripción", 1, 2000);
+  if (cambios.comuna) validarTexto(cambios.comuna, "La comuna", 2, 80);
+  if (cambios.cupos !== undefined && (!Number.isInteger(cambios.cupos) || cambios.cupos < 1 || cambios.cupos > 1000)) {
+    throw new Error("Los cupos deben estar entre 1 y 1000.");
+  }
+  if (cambios.requisitos !== undefined) {
+    if (!cambios.requisitos.length || cambios.requisitos.length > 15) throw new Error("Agrega entre 1 y 15 requisitos.");
+    cambios.requisitos.forEach((requisito, indice) => validarTexto(requisito, `El requisito ${indice + 1}`, 2, 200));
+  }
+  if (cambios.fecha_prueba !== undefined) {
+    const date = new Date(cambios.fecha_prueba);
+    const incluyeZona = /[+-]\d\d:\d\d$/.test(cambios.fecha_prueba);
+    if (!Number.isFinite(date.getTime()) || !incluyeZona || date.getTime() <= Date.now() || date.getTime() > Date.now() + 365 * 86400000) {
+      throw new Error("La fecha debe ser futura, incluir zona horaria y estar dentro del próximo año.");
+    }
+  }
+  if (cambios.edad_minima != null && cambios.edad_maxima != null && cambios.edad_minima > cambios.edad_maxima) {
+    throw new Error("La edad mínima no puede superar a la máxima.");
+  }
+  const ruta = `clubs/${encodeURIComponent(clubId)}/announcements/${encodeURIComponent(id)}`;
+  return apiGw(ruta, { method: "PATCH", body: cambios });
 }
 
 export async function cerrarConvocatoria(clubId: string, id: string): Promise<void> {
