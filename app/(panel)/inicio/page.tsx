@@ -25,7 +25,7 @@ export default function InicioPage() {
   const sesion = useSesion();
   const datos = useDatos();
   const { mensaje, abierto, setAbierto, cambiar } = useGestionPostulantes();
-  const mod = useModeracion();
+  const mod = useModeracion(sesion.rol === "admin");
 
   if (sesion.rol === "admin") {
     return (

@@ -168,12 +168,12 @@ export async function cargarModeracion(): Promise<void> {
   emitir();
 }
 
-export function useModeracion(): Moderacion {
+export function useModeracion(habilitado = true): Moderacion {
   const datos = useSyncExternalStore(suscribir, () => estado, () => VACIO);
   useEffect(() => {
-    void cargarModeracion();
-  }, []);
-  return datos;
+    if (habilitado) void cargarModeracion();
+  }, [habilitado]);
+  return habilitado ? datos : VACIO;
 }
 
 /** Estado actual, para pruebas. */
