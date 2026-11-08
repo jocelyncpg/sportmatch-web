@@ -2,7 +2,7 @@ import { apiGw } from "./cliente";
 import { cuerpoDesactivacion, cuerpoPlanCambios, cuerpoPlanNuevo, cuerpoReactivacion, queryPlanes } from "./admin.mjs";
 import type { DatosPlan } from "./admin.mjs";
 
-// HU-56: planes y convenios (ms-club vía el BFF, /payments/admin/plans). Solo para administradores.
+// HU-56: planes y convenios (ms-pago vía el BFF, /payments/admin/plans). Solo para administradores.
 // Distinto de lib/api/pagos.ts, que es el catálogo que ve un club al contratar.
 
 export type { DatosPlan };
@@ -48,7 +48,7 @@ export function listarPlanesAdmin(
   })}`);
 }
 
-/** Lo que ve la gente al contratar (catálogo público de ms-club): solo planes activos. */
+/** Lo que ve la gente al contratar (catálogo público de ms-pago): solo planes activos. */
 export type PlanPublico = Pick<PlanAdmin, "id" | "nombre" | "tipo" | "categoria" | "descripcion" | "precio" | "duracion_dias" | "beneficios" | "institucion">;
 export function catalogoPublico(tipo: TipoPlan): Promise<PlanPublico[]> {
   return apiGw<PlanPublico[]>(`payments/plans?tipo=${tipo}`);
