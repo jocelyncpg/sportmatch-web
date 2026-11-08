@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { SoloRol } from "@/components/SesionContext";
+import HistorialPagos from "@/components/HistorialPagos";
 import { Card, PageHeader, btnPrimary } from "@/components/ui";
 import { iniciarPago, listarPlanes, miSuscripcion, precioCLP, type Plan, type Suscripcion } from "@/lib/api/pagos";
 
@@ -53,6 +54,7 @@ function SuscripcionClub() {
         </Card>)}
       </div>
       {!planes.length && <p>No hay planes disponibles en este momento.</p>}
+      <HistorialPagos />
       <p className="text-sm text-muted">El pago se completa en Webpay. SportMatch no solicita ni guarda los datos completos de tu tarjeta.</p>
     </div>}
   </>;

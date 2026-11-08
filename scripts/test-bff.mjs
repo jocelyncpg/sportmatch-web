@@ -31,6 +31,20 @@ test("lista blanca del gateway incluye solo rutas pactadas", () => {
   assert.equal(rutasPermitidas("payments/webpay/commit"), true);
   for (const route of ["users/me", "users/reports/abc", "users/admin/reports", "users/reportsx", "payments/webpay/mock", "payments/webpay/commit/extra", "payments/plans/extra", "clubs/../users", "clubs//me", "clubs\\me"]) assert.equal(rutasPermitidas(route), false);
 });
+
+test("historial y comprobantes admiten solo GET, sesión y rutas exactas", () => {
+  const id = "11111111-2222-3333-4444-555555555555";
+  for (const path of ["payments/history/me", "payments/subscriptions/me/history", `payments/history/${id}/receipt`]) {
+    assert.equal(rutasPermitidas(path), true);
+    assert.deepEqual(decidirAcceso(path, "GET", "club"), { permitido: true, status: 200 });
+    assert.deepEqual(decidirAcceso(path, "GET", null), { permitido: false, status: 401 });
+    for (const method of ["POST", "PATCH", "DELETE"]) {
+      assert.deepEqual(decidirAcceso(path, method, "club"), { permitido: false, status: 405 });
+    }
+  }
+  for (const path of ["payments/history", "payments/history/otro/receipt", `payments/history/${id}/receipt/extra`,
+    "payments/subscriptions/otro/history", "payments/history/../me"]) assert.equal(rutasPermitidas(path), false);
+});
 test("mapea roles permitidos y bloquea deportistas", () => {
   assert.equal(mapearRol("club_admin"), "club"); assert.equal(mapearRol("admin"), "admin"); assert.equal(mapearRol("player"), null);
 });

@@ -124,6 +124,10 @@ async function proxy(request: Request, context: Contexto) {
         "content-type": upstream.headers.get("content-type") || "application/json",
         "cache-control": "no-store",
         "x-content-type-options": "nosniff",
+        ...(upstream.headers.get("content-disposition") ? {
+          "content-disposition": upstream.headers.get("content-disposition")!,
+          "content-security-policy": "default-src 'none'; style-src 'unsafe-inline'; sandbox",
+        } : {}),
       },
     });
   } catch {

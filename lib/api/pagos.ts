@@ -22,3 +22,30 @@ export async function iniciarPago(planId: number) {
   });
 }
 export const confirmarPago = (body: RetornoPago) => apiGw<Comprobante>("payments/webpay/commit", { method: "POST", body });
+
+export type Periodo = {
+  id: string; transaccion_id: string; plan_nombre: string; precio_pagado: number;
+  fecha_inicio: string; fecha_fin: string; vigente: boolean;
+};
+export type PagoHistorial = {
+  transaccion_id: string; buy_order: string; fecha: string; plan: Plan; amount: number;
+  status: Comprobante["status"]; authorization_code: string | null; card_last4: string | null;
+  payment_type_code: string | null; periodo: Periodo | null;
+};
+export type Pagina<T> = { items: T[]; total: number; page: number; page_size: number };
+export const historialPagos = (page = 1) => apiGw<Pagina<PagoHistorial>>(`payments/history/me?page=${page}&page_size=10`);
+export const historialPeriodos = (page = 1) => apiGw<Pagina<Periodo>>(`payments/subscriptions/me/history?page=${page}&page_size=10`);
+
+export async function descargarComprobante(id: string) {
+  const response = await fetch(`/api/gw/payments/history/${encodeURIComponent(id)}/receipt`, { cache: "no-store" });
+  if (!response.ok) throw new Error("No se pudo descargar el comprobante. Revisa tu sesión e inténtalo nuevamente.");
+  const blob = await response.blob();
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `comprobante-${id}.html`;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
