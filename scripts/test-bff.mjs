@@ -213,3 +213,16 @@ test("el BFF deja pasar la edición de una convocatoria y no abre rutas vecinas"
   assert.equal(rutaGateway(["clubs", club, "announcements", call]), `clubs/${club}/announcements/${call}`);
   assert.equal(rutasPermitidas(`clubs/${club}/announcements/../${call}`), false);
 });
+
+// HU-67: a quien ya fue aceptado no se le ofrece "Preseleccionar"; las demás decisiones quedan como estaban.
+import { decisionDisponible } from "../lib/datos-mapeo.mjs";
+
+test("el botón de preselección no se ofrece a un postulante aceptado y el resto de las decisiones no cambia", () => {
+  const estados = ["Pendiente", "Preseleccionado", "En espera", "Aceptado", "Rechazado"];
+  const ofrecidas = (actual) => estados.filter((nuevo) => decisionDisponible(actual, nuevo));
+  assert.equal(decisionDisponible("Aceptado", "Preseleccionado"), false);
+  assert.deepEqual(ofrecidas("Aceptado"), ["Pendiente", "En espera", "Rechazado"]);
+  for (const actual of ["Pendiente", "En espera", "Rechazado", "Preseleccionado"]) {
+    assert.deepEqual(ofrecidas(actual), estados.filter((nuevo) => nuevo !== actual), actual);   // como antes: todos menos el actual
+  }
+});

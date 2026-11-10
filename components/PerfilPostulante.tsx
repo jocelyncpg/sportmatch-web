@@ -7,6 +7,7 @@ import { DECISIONES, Foto, Valoracion } from "@/components/PostulanteCard";
 import ReportarDeportista from "@/components/ReportarDeportista";
 import { BadgeEstado, Chip, btnGhost, fechaCorta } from "@/components/ui";
 import type { EstadoPostulante, Postulante } from "@/lib/datos";
+import { decisionDisponible } from "@/lib/datos-mapeo.mjs";
 
 // Perfil completo del postulante (panel lateral). Se cierra con Esc o haciendo clic fuera.
 export default function PerfilPostulante({
@@ -129,7 +130,7 @@ export default function PerfilPostulante({
         </div>
 
         <div className="sticky bottom-0 flex flex-wrap gap-2 border-t border-border bg-card p-4">
-          {DECISIONES.filter((d) => d.estado !== p.estado).map((d) => (
+          {DECISIONES.filter((d) => decisionDisponible(p.estado, d.estado)).map((d) => (
             <button
               key={d.estado}
               type="button"
