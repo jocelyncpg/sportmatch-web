@@ -3,7 +3,8 @@
 import Image from "next/image";
 import { useEffect, useState } from "react";
 
-// Pantalla de carga de la portada: fondo negro y el icono de SportMatch latiendo.
+// Pantalla de carga de la portada: fondo negro y el logo completo de SportMatch en grande, que aparece
+// con un fundido suave, respira un poco y se desvanece.
 // Se muestra una vez por sesión del navegador (no cada vez que se vuelve a la portada).
 const CLAVE = "sportmatch_splash_visto";
 
@@ -11,12 +12,16 @@ const CLAVE = "sportmatch_splash_visto";
 const SCRIPT = `try{if(sessionStorage.getItem("${CLAVE}"))document.documentElement.dataset.splash="visto"}catch(e){}`;
 
 const ESTILOS = `
-@keyframes sm-latido {
-  0%, 100% { transform: scale(0.9); opacity: 0.85; }
-  50% { transform: scale(1.06); opacity: 1; }
+@keyframes sm-entrada {
+  from { transform: scale(0.88); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+@keyframes sm-respiro {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.035); }
 }
 @media (prefers-reduced-motion: no-preference) {
-  .sm-icono { animation: sm-latido 1.1s ease-in-out infinite; }
+  .sm-logo { animation: sm-entrada 0.9s cubic-bezier(0.22, 1, 0.36, 1) both, sm-respiro 2.2s ease-in-out 0.9s infinite; }
 }
 `;
 
@@ -29,13 +34,13 @@ export default function PantallaCarga() {
     // Si ya se vio en esta sesión, el CSS la oculta y no hay nada que animar.
     if (document.documentElement.dataset.splash === "visto") return;
     const reducir = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    const t1 = window.setTimeout(() => setFase("saliendo"), reducir ? 400 : 1500);
+    const t1 = window.setTimeout(() => setFase("saliendo"), reducir ? 1200 : 3200);
     const t2 = window.setTimeout(() => {
       try {
         sessionStorage.setItem(CLAVE, "1");
       } catch {}
       setFase("fuera");
-    }, reducir ? 700 : 2000);
+    }, reducir ? 1500 : 3800);
     return () => {
       window.clearTimeout(t1);
       window.clearTimeout(t2);
@@ -56,12 +61,12 @@ export default function PantallaCarga() {
         }`}
       >
         <Image
-          src="/brand/icono.png"
-          alt=""
-          width={320}
-          height={320}
+          src="/logo-dark.png"
+          alt="SportMatch"
+          width={1200}
+          height={262}
           priority
-          className="sm-icono h-auto w-40 sm:w-52"
+          className="sm-logo h-auto w-[82vw] max-w-[620px]"
         />
       </div>
     </>

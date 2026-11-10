@@ -2,9 +2,10 @@
 
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import Mapa from "@/components/Mapa";
+import Image from "next/image";
+import MapaUbicacion from "@/components/MapaUbicacion";
 import { Avatar, Card, Chip, PageHeader, fechaCorta } from "@/components/ui";
-import { COMUNAS } from "@/lib/comunas";
+import { centroDeComuna, comunaOficial } from "@/lib/comunasRM";
 import { useDatos } from "@/lib/datos";
 
 // HU-30: perfil público con descripción, fotos, ubicación y convocatorias abiertas.
@@ -23,6 +24,13 @@ export default function PerfilPublicoPage() {
   }
 
   const abiertas = datos.convocatorias.filter((v) => v.clubId === club.id && v.estado === "abierta");
+  // Ubicación exacta si el club marcó su punto en el mapa; si no, el centro aproximado de su comuna.
+  const exacta = club.latitud != null && club.longitud != null;
+  const punto: [number, number] | null = exacta
+    ? [club.latitud as number, club.longitud as number]
+    : comunaOficial(club.zona)
+      ? centroDeComuna(club.zona)
+      : null;
 
   return (
     <section className="max-w-3xl">
@@ -51,28 +59,39 @@ export default function PerfilPublicoPage() {
       <Card className="mb-4">
         <h2 className="mb-2 text-sm font-bold">Contacto y ubicación</h2>
         <dl className="space-y-1 text-sm">
-          <Fila etiqueta="Zona" valor={club.zona} />
+          <Fila etiqueta="Comuna" valor={club.zona} />
+          <Fila etiqueta="Dirección" valor={club.direccion} />
           <Fila etiqueta="Correo" valor={club.email} />
           <Fila etiqueta="Teléfono" valor={club.telefono} />
           <Fila etiqueta="Instagram" valor={club.instagram} />
           <Fila etiqueta="Sitio web" valor={club.web} />
         </dl>
-        {COMUNAS[club.zona] ? (
+        {punto ? (
           <div className="mt-4">
-            <Mapa
-              alto={240}
-              centro={COMUNAS[club.zona]}
-              zoom={14}
-              puntos={[{ id: club.id, nombre: club.nombre, detalle: club.zona, coord: COMUNAS[club.zona] }]}
-            />
-            <p className="mt-2 text-xs text-muted">Ubicación aproximada de la comuna.</p>
+            <MapaUbicacion foco={punto} pin={punto} alto={240} />
+            <p className="mt-2 text-xs text-muted">
+              {exacta ? "Ubicación marcada por el club." : "Ubicación aproximada de la comuna."}
+            </p>
           </div>
         ) : null}
       </Card>
 
       <Card className="mb-4">
         <h2 className="mb-2 text-sm font-bold">Fotos</h2>
-        <p className="text-sm text-muted">Este club aún no ha publicado fotos.</p>
+        {club.portadaUrl ? (
+          <div className="relative aspect-[3/1] w-full overflow-hidden rounded-xl border border-border bg-subtle">
+            <Image
+              src={club.portadaUrl}
+              alt={`Portada de ${club.nombre}`}
+              fill
+              unoptimized
+              sizes="(min-width: 768px) 672px, 100vw"
+              className="object-cover"
+            />
+          </div>
+        ) : (
+          <p className="text-sm text-muted">Este club aún no ha publicado fotos.</p>
+        )}
       </Card>
 
       <h2 className="mb-3 mt-6 text-sm font-bold">Convocatorias abiertas</h2>
