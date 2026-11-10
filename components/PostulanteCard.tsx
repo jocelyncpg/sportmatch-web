@@ -5,6 +5,7 @@ import Image from "next/image";
 import { useState } from "react";
 import { BadgeEstado, Card } from "@/components/ui";
 import type { EstadoPostulante, Postulante } from "@/lib/datos";
+import { decisionDisponible } from "@/lib/datos-mapeo.mjs";
 
 export function Foto({ p, className = "" }: { p: Postulante; className?: string }) {
   const [fallo, setFallo] = useState(false);
@@ -86,7 +87,7 @@ export default function PostulanteCard({
             Ver perfil
           </button>
           <div className="flex gap-1.5">
-            {DECISIONES.filter((d) => d.estado !== p.estado).map((d) => {
+            {DECISIONES.filter((d) => decisionDisponible(p.estado, d.estado)).map((d) => {
               const Icono = d.icono;
               return (
                 <button
