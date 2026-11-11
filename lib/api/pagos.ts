@@ -1,6 +1,7 @@
 "use client";
 
 import { apiGw, ApiError } from "./cliente";
+import type { UsoPlan } from "../limitePlan";
 
 export type Plan = { id: number; nombre: string; descripcion: string | null; precio: number; duracion_dias: number };
 export type Suscripcion = { estado: "ACTIVE" | "EXPIRED"; plan: Plan; fecha_fin: string };
@@ -12,6 +13,8 @@ export type Comprobante = {
 };
 export const precioCLP = (value: number) => new Intl.NumberFormat("es-CL", { style: "currency", currency: "CLP" }).format(value);
 export const listarPlanes = () => apiGw<Plan[]>("payments/plans?tipo=CLUB");
+/** HU-54: uso actual de los recursos limitados del club (convocatorias abiertas, comunicados, canales). */
+export const usoPlanClub = () => apiGw<UsoPlan>("clubs/plan-usage/me");
 export async function miSuscripcion(): Promise<Suscripcion | null> {
   try { return await apiGw<Suscripcion>("payments/subscription/me"); }
   catch (error) { if (error instanceof ApiError && error.status === 404) return null; throw error; }

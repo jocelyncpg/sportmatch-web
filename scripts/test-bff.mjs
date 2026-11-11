@@ -227,3 +227,33 @@ test("el BFF deja pasar la edición de una convocatoria y no abre rutas vecinas"
   assert.equal(rutaGateway(["clubs", club, "announcements", call]), `clubs/${club}/announcements/${call}`);
   assert.equal(rutasPermitidas(`clubs/${club}/announcements/../${call}`), false);
 });
+
+// HU-57: pagos de la plataforma para el administrador. Solo GET y solo con sesión de administrador.
+test("pagos del administrador: solo admin, solo GET y sin rutas vecinas", () => {
+  const ruta = "payments/admin/transactions";
+  assert.deepEqual(decidirAcceso(ruta, "GET", "admin"), { permitido: true, status: 200 });
+  assert.equal(rutaGateway(ruta.split("/")), ruta);
+  assert.deepEqual(metodosAdmin(ruta), ["GET"]);
+  assert.deepEqual(decidirAcceso(ruta, "GET", "club"), { permitido: false, status: 403 });
+  for (const rol of [null, undefined, ""]) assert.deepEqual(decidirAcceso(ruta, "GET", rol), { permitido: false, status: 401 });
+  for (const rol of ["player", "ADMIN", "club_admin"]) assert.equal(decidirAcceso(ruta, "GET", rol).permitido, false, rol);
+  // No se puede modificar un pago: cualquier otro método es 405 aunque sea admin.
+  for (const metodo of ["POST", "PUT", "PATCH", "DELETE"]) {
+    assert.deepEqual(decidirAcceso(ruta, metodo, "admin"), { permitido: false, status: 405 }, metodo);
+  }
+  for (const vecina of [`${ruta}/${ID}`, `${ruta}/${ID}/refund`, `${ruta}x`, "payments/admin/transaction",
+    "payments/admin/transactions/../plans", "payments/transactions", "payments/admin//transactions"]) {
+    for (const rol of ["admin", "club", null]) assert.equal(decidirAcceso(vecina, "GET", rol).permitido, false, `${rol} ${vecina}`);
+    assert.equal(rutaGateway(vecina.split("/")), null, vecina);
+  }
+  assert.equal(rutasPermitidas(ruta), false); // no entra a la lista de club/pública
+});
+
+test("el panel de pagos está en la navegación del administrador y no del club", () => {
+  const layout = readFileSync(new URL("../app/(panel)/layout.tsx", import.meta.url), "utf8");
+  assert.match(layout, /\{ href: "\/pagos", [^}]*roles: \["admin"\] \}/);
+  const pagina = readFileSync(new URL("../app/(panel)/pagos/page.tsx", import.meta.url), "utf8");
+  assert.match(pagina, /<SoloRol roles=\{\["admin"\]\}>/);
+  const cliente = readFileSync(new URL("../lib/api/pagosAdmin.ts", import.meta.url), "utf8");
+  assert.doesNotMatch(cliente, /method:\s*"(POST|PUT|PATCH|DELETE)"/); // solo lectura
+});

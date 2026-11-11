@@ -10,6 +10,7 @@ import {
   LogOut,
   Megaphone,
   Menu,
+  Receipt,
   ScrollText,
   ShieldCheck,
   Users,
@@ -20,6 +21,7 @@ import Link from "next/link";
 import { Suspense, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import AuthGuard from "@/components/AuthGuard";
+import AvisoLimitePlan from "@/components/AvisoLimitePlan";
 import BrandLogo from "@/components/BrandLogo";
 import MenuUsuario from "@/components/MenuUsuario";
 import { SesionCtx, SoloRol } from "@/components/SesionContext";
@@ -59,7 +61,10 @@ const GRUPOS: { titulo: string; items: Item[] }[] = [
   },
   {
     titulo: "Plataforma",
-    items: [{ href: "/planes", label: "Planes y convenios", corto: "Planes", icono: BadgePercent, roles: ["admin"] }],
+    items: [
+      { href: "/planes", label: "Planes y convenios", corto: "Planes", icono: BadgePercent, roles: ["admin"] },
+      { href: "/pagos", label: "Pagos de la plataforma", corto: "Pagos", icono: Receipt, roles: ["admin"] },
+    ],
   },
   {
     titulo: "Moderación",
@@ -215,6 +220,8 @@ function Panel({ children }: { children: React.ReactNode }) {
               <main className="mx-auto w-full max-w-7xl px-5 py-10 sm:px-8 md:py-12">
                 <SoloRol roles={seccion?.roles ?? ["club", "admin"]}>{children}</SoloRol>
               </main>
+              {/* HU-54: límite del plan gratuito alcanzado → enlace a Mi suscripción. */}
+              {sesion.rol === "club" ? <AvisoLimitePlan /> : null}
             </div>
           </SesionCtx.Provider>
         );

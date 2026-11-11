@@ -23,3 +23,11 @@ export type OpcionesCookie = {
   maxAge: number;
 };
 export function opcionesCookie(secure: boolean, maxAge: number): OpcionesCookie;
+export type LimitePlanBff = {
+  codigo: "LIMITE_PLAN";
+  recurso: string;
+  limite: number;
+  usado: number;
+  se_libera_en: string | null;
+};
+export function limitePlanBff(status: number, payload: unknown): LimitePlanBff | null;

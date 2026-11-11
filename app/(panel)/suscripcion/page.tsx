@@ -5,7 +5,8 @@ import { useEffect, useRef, useState } from "react";
 import { SoloRol } from "@/components/SesionContext";
 import HistorialPagos from "@/components/HistorialPagos";
 import { Card, PageHeader, btnPrimary } from "@/components/ui";
-import { iniciarPago, listarPlanes, miSuscripcion, precioCLP, type Plan, type Suscripcion } from "@/lib/api/pagos";
+import { iniciarPago, listarPlanes, miSuscripcion, precioCLP, usoPlanClub, type Plan, type Suscripcion } from "@/lib/api/pagos";
+import { textoSeLibera, textoUsoPlan, type UsoPlan } from "@/lib/limitePlan";
 
 function SuscripcionClub() {
   const [planes, setPlanes] = useState<Plan[]>([]);
@@ -15,12 +16,15 @@ function SuscripcionClub() {
   const [pagando, setPagando] = useState<number | null>(null);
   const [pendiente, setPendiente] = useState(false);
   const [checkout, setCheckout] = useState<string | null>(null);
+  const [uso, setUso] = useState<UsoPlan | null>(null);
   const lock = useRef(false);
   useEffect(() => {
     let active = true;
     Promise.all([listarPlanes(), miSuscripcion()]).then(([catalogo, suscripcion]) => {
       if (active) { setPlanes(catalogo); setActual(suscripcion); setPendiente(!!sessionStorage.getItem("sportmatch_pago_pendiente")); setCheckout(sessionStorage.getItem("sportmatch_pago_checkout")); }
     }).catch((e: Error) => { if (active) setError(e.message); }).finally(() => { if (active) setCargando(false); });
+    // HU-54: el uso del plan es informativo; si no responde, la página sigue igual.
+    usoPlanClub().then((valor) => { if (active) setUso(valor); }).catch(() => undefined);
     return () => { active = false; };
   }, []);
   async function pagar(plan: Plan) {
@@ -43,6 +47,20 @@ function SuscripcionClub() {
       <Card><h2 className="text-lg font-bold">{actual?.estado === "ACTIVE" ? actual.plan.nombre : "Sin suscripción activa"}</h2>
         {actual && <p className="mt-2 text-muted">{actual.estado === "ACTIVE" ? "Vigente hasta" : "Venció el"} {new Date(actual.fecha_fin).toLocaleDateString("es-CL")}</p>}
       </Card>
+      {uso && uso.items.some((item) => textoUsoPlan(item)) && <Card>
+        <h2 className="text-lg font-bold">Uso de tu plan</h2>
+        <ul className="mt-2 space-y-1">
+          {uso.items.map((item) => {
+            const texto = textoUsoPlan(item);
+            if (!texto) return null;
+            const libera = item.limite !== null && item.usado !== null && item.usado >= item.limite
+              ? textoSeLibera({ recurso: item.recurso, limite: item.limite, usado: item.usado, se_libera_en: item.se_libera_en })
+              : null;
+            return <li key={item.recurso}>{texto}{libera && <span className="text-sm text-muted"> · {libera}</span>}</li>;
+          })}
+        </ul>
+        {uso.plan === "GRATIS" && <p className="mt-2 text-sm text-muted">Con un plan pagado no tienes estos límites.</p>}
+      </Card>}
       <div className="grid gap-4 sm:grid-cols-2">
         {planes.map((plan) => <Card key={plan.id}>
           <h2 className="text-xl font-bold">{plan.nombre}</h2>
