@@ -257,3 +257,16 @@ test("el panel de pagos está en la navegación del administrador y no del club"
   const cliente = readFileSync(new URL("../lib/api/pagosAdmin.ts", import.meta.url), "utf8");
   assert.doesNotMatch(cliente, /method:\s*"(POST|PUT|PATCH|DELETE)"/); // solo lectura
 });
+
+// HU-67: a quien ya fue aceptado no se le ofrece "Preseleccionar"; las demás decisiones quedan como estaban.
+import { decisionDisponible } from "../lib/datos-mapeo.mjs";
+
+test("el botón de preselección no se ofrece a un postulante aceptado y el resto de las decisiones no cambia", () => {
+  const estados = ["Pendiente", "Preseleccionado", "En espera", "Aceptado", "Rechazado"];
+  const ofrecidas = (actual) => estados.filter((nuevo) => decisionDisponible(actual, nuevo));
+  assert.equal(decisionDisponible("Aceptado", "Preseleccionado"), false);
+  assert.deepEqual(ofrecidas("Aceptado"), ["Pendiente", "En espera", "Rechazado"]);
+  for (const actual of ["Pendiente", "En espera", "Rechazado", "Preseleccionado"]) {
+    assert.deepEqual(ofrecidas(actual), estados.filter((nuevo) => nuevo !== actual), actual);   // como antes: todos menos el actual
+  }
+});
