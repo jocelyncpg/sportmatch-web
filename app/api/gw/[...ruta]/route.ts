@@ -1,7 +1,7 @@
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import { COOKIE_TOKEN, COOKIE_USER, leerUsuarioFirmado, opcionesCookie, origenSeguro } from "@/lib/servidor/bff";
-import { decidirAcceso, mensajeBackend, rutaGateway } from "@/lib/servidor/core.mjs";
+import { decidirAcceso, limitePlanBff, mensajeBackend, rutaGateway } from "@/lib/servidor/core.mjs";
 
 type Contexto = {
   params: Promise<{ ruta: string[] }>;
@@ -113,8 +113,10 @@ async function proxy(request: Request, context: Contexto) {
       }
       const fallback = messages[upstream.status] ?? "No se pudo completar la solicitud.";
       const error = mensajeBackend(upstream.status, payload, fallback);
+      // HU-54: límite del plan gratuito; el panel necesita el límite y cuándo se libera para ofrecer un plan.
+      const limite = limitePlanBff(upstream.status, payload);
       return NextResponse.json(
-        { error },
+        limite ? { error, ...limite } : { error },
         { status: upstream.status, headers: { "cache-control": "no-store" } },
       );
     }
@@ -124,6 +126,10 @@ async function proxy(request: Request, context: Contexto) {
         "content-type": upstream.headers.get("content-type") || "application/json",
         "cache-control": "no-store",
         "x-content-type-options": "nosniff",
+        ...(upstream.headers.get("content-disposition") ? {
+          "content-disposition": upstream.headers.get("content-disposition")!,
+          "content-security-policy": "default-src 'none'; style-src 'unsafe-inline'; sandbox",
+        } : {}),
       },
     });
   } catch {

@@ -3,9 +3,15 @@
 import { errorBff } from "../servidor/core.mjs";
 import { queryString, validarTexto } from "./validaciones.mjs";
 import { olvidarSesion } from "../auth";
+import { avisarLimitePlan, leerLimitePlan, mensajeLimitePlan, type LimitePlan } from "../limitePlan";
 
 export class ApiError extends Error {
-  constructor(message: string, readonly status: number) {
+  constructor(
+    message: string,
+    readonly status: number,
+    /** HU-54: con HTTP 402 LIMITE_PLAN, qué límite del plan gratuito se alcanzó. */
+    readonly limitePlan?: LimitePlan,
+  ) {
     super(message);
     this.name = "ApiError";
   }
@@ -59,6 +65,12 @@ export async function apiGw<T>(ruta: string, opciones: OpcionesApi = {}): Promis
       502: "El servicio no está disponible. Inténtalo nuevamente.",
       503: "El servicio no está disponible. Inténtalo nuevamente.",
     };
+    const limite = response.status === 402 ? leerLimitePlan(payload) : null;
+    if (limite) {
+      // HU-54: el panel muestra el aviso con el enlace a Mi suscripción (AvisoLimitePlan).
+      avisarLimitePlan(limite);
+      throw new ApiError(mensajeLimitePlan(limite), 402, limite);
+    }
     const fallback = known[response.status] ?? "No se pudo completar la solicitud.";
     throw new ApiError(errorBff(payload, fallback), response.status);
   }
