@@ -7,7 +7,7 @@ import { cerrarConvocatoria as cerrarEnApi, listarConvocatorias, publicarConvoca
 import { listarTodosPostulantes, actualizarPostulante } from "./api/postulantes";
 import { listarAvisos, publicarAviso } from "./api/avisos";
 import { ApiError } from "./api/cliente";
-import { instagramAGuardar, mapAviso, mapClub, mapConvocatoria, mapPostulante, opcional, webAGuardar } from "./datos-mapeo.mjs";
+import { estadoParaBackend, instagramAGuardar, mapAviso, mapClub, mapConvocatoria, mapPostulante, opcional, webAGuardar } from "./datos-mapeo.mjs";
 
 export type EstadoPostulante = "Pendiente" | "Preseleccionado" | "En espera" | "Aceptado" | "Rechazado";
 export const ESTADOS: EstadoPostulante[] = ["Pendiente", "Preseleccionado", "En espera", "Aceptado", "Rechazado"];
@@ -229,9 +229,7 @@ export function cambiarEstadoPostulante(id: string, nuevo: EstadoPostulante): st
     notificaciones: [{ id: nuevoId("n"), texto, fecha: new Date().toISOString() }, ...estado.notificaciones],
   });
   const real = postulacionesReales.get(id) ?? id;
-  const estados = { Pendiente: "PENDIENTE", Preseleccionado: "PRESELECCIONADO", "En espera": "EN_ESPERA", Aceptado: "ACEPTADO", Rechazado: "RECHAZADO" } as const;
-  if (nuevo !== "Pendiente") void actualizarPostulante(real, estados[nuevo]).catch(async (error) => { registrarError(error); await recargar(); });
-  else { registrarError(new Error("El backend no permite volver una postulación a pendiente.")); void recargar(); }
+  void actualizarPostulante(real, estadoParaBackend(nuevo)).catch(async (error) => { registrarError(error); await recargar(); });
   return texto;
 }
 

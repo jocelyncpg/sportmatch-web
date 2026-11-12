@@ -2,9 +2,9 @@ import { apiGw } from "./cliente";
 import { queryString, validarTexto } from "./validaciones.mjs";
 import type { Convocatoria } from "./convocatorias";
 
-// EN_ESPERA aún no está en el contrato de Ms-club (pendiente de backend); la web ya lo envía.
-export type EstadoPostulacion = "PENDIENTE" | "PRESELECCIONADO" | "EN_ESPERA" | "ACEPTADO" | "RECHAZADO";
-export type EstadoRevision = Exclude<EstadoPostulacion, "PENDIENTE">;
+// Los estados de Ms-club. «En espera» de la web se envía como PENDIENTE (ver estadoParaBackend).
+export type EstadoPostulacion = "PENDIENTE" | "PRESELECCIONADO" | "ACEPTADO" | "RECHAZADO";
+export type EstadoRevision = EstadoPostulacion;
 
 export interface PerfilDeportivo {
   nombre: string;
@@ -77,7 +77,7 @@ export async function actualizarPostulante(
   estado: EstadoRevision,
   comentario?: string | null
 ): Promise<Candidato> {
-  if (!["PRESELECCIONADO", "EN_ESPERA", "ACEPTADO", "RECHAZADO"].includes(estado)) {
+  if (!["PENDIENTE", "PRESELECCIONADO", "ACEPTADO", "RECHAZADO"].includes(estado)) {
     throw new Error("Selecciona un estado válido.");
   }
   if (comentario) {
