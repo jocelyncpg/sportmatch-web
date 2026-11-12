@@ -25,6 +25,7 @@ export async function iniciarPago(planId: number) {
   });
 }
 export const confirmarPago = (body: RetornoPago) => apiGw<Comprobante>("payments/webpay/commit", { method: "POST", body });
+export const cancelarPago = (body: { token_ws: string }) => apiGw<Comprobante>("payments/webpay/cancel", { method: "POST", body });
 
 export type Periodo = {
   id: string; transaccion_id: string; plan_nombre: string; precio_pagado: number;

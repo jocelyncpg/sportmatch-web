@@ -1,11 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { SoloRol } from "@/components/SesionContext";
 import HistorialPagos from "@/components/HistorialPagos";
 import { Card, PageHeader, btnPrimary } from "@/components/ui";
-import { iniciarPago, listarPlanes, miSuscripcion, precioCLP, usoPlanClub, type Plan, type Suscripcion } from "@/lib/api/pagos";
+import { cancelarPago, iniciarPago, listarPlanes, miSuscripcion, precioCLP, usoPlanClub, type Plan, type Suscripcion } from "@/lib/api/pagos";
+import { recuperarPagoPendiente } from "@/lib/api/pago-pendiente.mjs";
 import { textoSeLibera, textoUsoPlan, type UsoPlan } from "@/lib/limitePlan";
 
 function SuscripcionClub() {
@@ -15,13 +16,21 @@ function SuscripcionClub() {
   const [error, setError] = useState("");
   const [pagando, setPagando] = useState<number | null>(null);
   const [pendiente, setPendiente] = useState(false);
-  const [checkout, setCheckout] = useState<string | null>(null);
+  const [mensaje, setMensaje] = useState("");
+  const [historialVersion, setHistorialVersion] = useState(0);
   const [uso, setUso] = useState<UsoPlan | null>(null);
   const lock = useRef(false);
   useEffect(() => {
     let active = true;
-    Promise.all([listarPlanes(), miSuscripcion()]).then(([catalogo, suscripcion]) => {
-      if (active) { setPlanes(catalogo); setActual(suscripcion); setPendiente(!!sessionStorage.getItem("sportmatch_pago_pendiente")); setCheckout(sessionStorage.getItem("sportmatch_pago_checkout")); }
+    Promise.all([listarPlanes(), miSuscripcion()]).then(async ([catalogo, suscripcion]) => {
+      if (active) { setPlanes(catalogo); setActual(suscripcion); setPendiente(!!sessionStorage.getItem("sportmatch_pago_pendiente")); }
+      const previo = await recuperarPagoPendiente(sessionStorage, cancelarPago);
+      if (active && previo) {
+        setPendiente(false);
+        setHistorialVersion((version) => version + 1);
+        if (previo.status === "APPROVED") setActual(previo.suscripcion);
+        setMensaje(previo.status === "APPROVED" ? "El pago anterior ya fue aprobado. Puedes revisar su detalle abajo." : "El intento anterior quedó cancelado. Puedes iniciar un nuevo pago.");
+      }
     }).catch((e: Error) => { if (active) setError(e.message); }).finally(() => { if (active) setCargando(false); });
     // HU-54: el uso del plan es informativo; si no responde, la página sigue igual.
     usoPlanClub().then((valor) => { if (active) setUso(valor); }).catch(() => undefined);
@@ -31,18 +40,48 @@ function SuscripcionClub() {
     if (lock.current) return;
     lock.current = true; setPagando(plan.id); setError("");
     try {
+      const previo = await recuperarPagoPendiente(sessionStorage, cancelarPago);
+      if (previo?.status === "APPROVED") {
+        setActual(previo.suscripcion); setPendiente(false);
+        setHistorialVersion((version) => version + 1);
+        setMensaje("El pago anterior ya fue aprobado. Revisa tu suscripción antes de pagar nuevamente.");
+        lock.current = false; setPagando(null);
+        return;
+      }
       const pago = await iniciarPago(plan.id);
       sessionStorage.setItem("sportmatch_pago_pendiente", JSON.stringify({ token_ws: pago.token_ws }));
       sessionStorage.setItem("sportmatch_pago_checkout", pago.checkout_url);
       window.location.assign(pago.checkout_url);
     } catch (e) { setError(e instanceof Error ? e.message : "No se pudo iniciar el pago."); lock.current = false; setPagando(null); }
   }
+  const cancelarIntento = useCallback(async () => {
+    if (lock.current) return;
+    lock.current = true; setPagando(-1); setError("");
+    try {
+      const previo = await recuperarPagoPendiente(sessionStorage, cancelarPago);
+      setPendiente(false);
+      setHistorialVersion((version) => version + 1);
+      if (previo?.status === "APPROVED") setActual(previo.suscripcion);
+      setMensaje(previo?.status === "APPROVED" ? "El pago anterior ya fue aprobado." : "Intento cancelado. Puedes volver a pagar.");
+    } catch (e) { setError(e instanceof Error ? e.message : "No se pudo verificar el pago."); }
+    finally { lock.current = false; setPagando(null); }
+  }, []);
+  useEffect(() => {
+    const revisarAlVolver = (event: PageTransitionEvent) => {
+      if (!event.persisted) return;
+      lock.current = false; setPagando(null);
+      if (sessionStorage.getItem("sportmatch_pago_pendiente")) void cancelarIntento();
+    };
+    window.addEventListener("pageshow", revisarAlVolver);
+    return () => window.removeEventListener("pageshow", revisarAlVolver);
+  }, [cancelarIntento]);
   return <>
     <PageHeader titulo="Mi suscripción" subtitulo="Planes del club y pagos con Webpay Plus." />
     {error && <p role="alert" className="mb-4 text-red-600">{error}</p>}
+    {mensaje && <p role="status" className="mb-4 text-muted">{mensaje}</p>}
     {cargando ? <p role="status">Cargando planes…</p> : <div className="space-y-6">
       {pendiente && <Card><p>Revisa el pago pendiente antes de iniciar otro intento.</p><Link className="text-accent underline" href="/pago/resultado">Revisar resultado</Link>
-        {checkout && <a className="ml-5 text-accent underline" href={checkout}>Continuar en Webpay</a>}
+        <button disabled={pagando !== null} className="ml-5 text-accent underline" onClick={() => void cancelarIntento()}>Cancelar intento anterior</button>
       </Card>}
       <Card><h2 className="text-lg font-bold">{actual?.estado === "ACTIVE" ? actual.plan.nombre : "Sin suscripción activa"}</h2>
         {actual && <p className="mt-2 text-muted">{actual.estado === "ACTIVE" ? "Vigente hasta" : "Venció el"} {new Date(actual.fecha_fin).toLocaleDateString("es-CL")}</p>}
@@ -72,7 +111,7 @@ function SuscripcionClub() {
         </Card>)}
       </div>
       {!planes.length && <p>No hay planes disponibles en este momento.</p>}
-      <HistorialPagos />
+      <HistorialPagos key={historialVersion} />
       <p className="text-sm text-muted">El pago se completa en Webpay. SportMatch no solicita ni guarda los datos completos de tu tarjeta.</p>
     </div>}
   </>;
